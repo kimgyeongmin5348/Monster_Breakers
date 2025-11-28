@@ -126,16 +126,11 @@ public:
 
 	float								m_fElapsedTime = 0.0f;
 
-	int									m_nGameObjects = 0;
-	CGameObject**m_ppGameObjects = NULL;
-
-	int									m_nMonster = 0;
-	CGameObject							**m_ppMonsters = NULL;
+	std::vector<CGameObject*> m_GameObjects;  
+	std::vector<CGameObject*> m_Monsters;     
+	std::vector<CShader*>     m_Shaders;
 
 	XMFLOAT3							m_xmf3RotatePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	int									m_nShaders = 0;
-	CShader								**m_ppShaders = NULL;
 
 	CSkyBox								*m_pSkyBox = NULL;
 	CHeightMapTerrain					*m_pTerrain = NULL;
@@ -205,9 +200,7 @@ public:
 	virtual void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
 private:
-	int									m_nGameObjects = 0;
-	CGameObject** m_ppGameObjects = NULL;
-
+	std::vector<CGameObject*> m_GameObjects;
 
 	InputStep m_inputStep = InputStep::EnterID;
 	std::string m_inputID;

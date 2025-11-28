@@ -103,12 +103,12 @@ void CScene::InitializeCollisionSystem()
 	BoundingBox worldBounds(XMFLOAT3(-20.0f, -10.f, -66.0f), XMFLOAT3(150.0f, 100.0f, 170.0f));
 	m_CollisionManager.Build(worldBounds, 35, 4);
 
-	for (int i = 0; i < m_nGameObjects; ++i) {
-		m_CollisionManager.InsertObject(m_ppGameObjects[i]);
+	for (auto* obj : m_GameObjects) {
+		m_CollisionManager.InsertObject(obj);
 	}
 
-	for (int i = 0; i < m_nMonster; ++i) {
-		m_CollisionManager.InsertObject(m_ppMonsters[i]);
+	for (auto* obj : m_Monsters) {
+		m_CollisionManager.InsertObject(obj);
 	}
 
 	for (auto obj : m_pMap->m_vMapObjects) {
@@ -125,12 +125,12 @@ void CScene::GenerateGameObjectsBoundingBox()
 {
 	m_pPlayer->CalculateBoundingBox();
 
-	for (int i = 0; i < m_nGameObjects; ++i) {
-		m_ppGameObjects[i]->CalculateBoundingBox();
+	for (auto* obj : m_GameObjects) {
+		obj->CalculateBoundingBox();
 	}
 
-	for (int i = 0; i < m_nMonster; ++i) {
-		m_ppMonsters[i]->CalculateBoundingBox();
+	for (auto* obj : m_Monsters) {
+		obj->CalculateBoundingBox();
 	}
 
 	for (auto obj : m_pMap->m_vMapObjects) {
@@ -157,8 +157,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_pEffect = new CParticle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
-	m_nMonster = 4; // spider
-	m_ppMonsters = new CGameObject * [m_nMonster];
+	m_Monsters.clear();
+	m_Monsters.resize(4);
 	int monsterIDs[4] = { 10001,10002,10003,10004 };
 
 	CLoadedModelInfo* pSpiderModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/spider_myOldOne.bin", NULL);
@@ -168,36 +168,36 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 		{4, 0, -50},
 		{-46, 0,-42}
 	};
-	for (int i = 0; i < m_nMonster; ++i)
+	for (int i = 0; i < static_cast<int>(m_Monsters.size()); ++i)
 	{
-		m_ppMonsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
-		m_ppMonsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
+		m_Monsters[i] = new CSpider(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pSpiderModel, 5);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); //idle
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(1, 1); //walk
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(2, 2); //run
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(3, 3); //attack
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackAnimationSet(4, 4); //death
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(1, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(2, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(3, false);
+		m_Monsters[i]->m_pSkinnedAnimationController->SetTrackEnable(4, false);
 
-		m_ppMonsters[i]->SetPosition(monsterPos[i]);
-		m_ppMonsters[i]->Rotate(0, 0, 0);
-		m_ppMonsters[i]->SetScale(3, 3, 3);
+		m_Monsters[i]->SetPosition(monsterPos[i]);
+		m_Monsters[i]->Rotate(0, 0, 0);
+		m_Monsters[i]->SetScale(3, 3, 3);
 
 		std::string spiderName = "Spider" + std::to_string(i);
-		m_ppMonsters[i]->SetFrameName(spiderName.c_str());
+		m_Monsters[i]->SetFrameName(spiderName.c_str());
 
-		static_cast<CSpider*>(m_ppMonsters[i])->SetMonsterID(monsterIDs[i]);
-		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_ppMonsters[i]);
+		static_cast<CSpider*>(m_Monsters[i])->SetMonsterID(monsterIDs[i]);
+		g_monsters[monsterIDs[i]] = static_cast<CSpider*>(m_Monsters[i]);
 
 	}
 
-
 	if (pSpiderModel) delete pSpiderModel;
 
-	m_nGameObjects = 8;
-	m_ppGameObjects = new CGameObject * [m_nGameObjects];
+	m_GameObjects.clear();
+	m_GameObjects.resize(8);
+
 	long long itemIDs[8] = { 20000, 20001, 20002,
 							 30000, 30001, 30002, 30003, 30004};
 
@@ -215,32 +215,30 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	};
 
 	CLoadedModelInfo* pFlashlightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Flashlightgold.bin", NULL);
-	m_ppGameObjects[0] = new FlashLight(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pFlashlightModel);
-	m_ppGameObjects[0]->SetScale(3, 3, 3);
-	m_ppGameObjects[0]->Rotate(-90, 180, 0);
-	m_ppGameObjects[0]->SetFrameName("FlashLight");
-	//m_ppGameObjects[0]->price = 80;
-	m_ppGameObjects[0]->SetPosition(positions[0]);
+	m_GameObjects[0] = new FlashLight(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pFlashlightModel);
+	m_GameObjects[0]->SetScale(3, 3, 3);
+	m_GameObjects[0]->Rotate(-90, 180, 0);
+	m_GameObjects[0]->SetFrameName("FlashLight");
+	m_GameObjects[0]->SetPosition(positions[0]);
 
-	static_cast<Item*>(m_ppGameObjects[0])->SetUniqueID(itemIDs[0]);
-	static_cast<Item*>(m_ppGameObjects[0])->SetPrice(itemPrices[0]);
-	g_items[itemIDs[0]] = static_cast<Item*>(m_ppGameObjects[0]);
+	static_cast<Item*>(m_GameObjects[0])->SetUniqueID(itemIDs[0]);
+	static_cast<Item*>(m_GameObjects[0])->SetPrice(itemPrices[0]);
+	g_items[itemIDs[0]] = static_cast<Item*>(m_GameObjects[0]);
 
 	if (pFlashlightModel) delete pFlashlightModel;
 
 	// ============================================================================================================
 
 	CLoadedModelInfo* pShovelModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Shovel.bin", NULL);
-	m_ppGameObjects[1] = new Shovel(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pShovelModel);
-	m_ppGameObjects[1]->SetScale(1, 1, 1);
-	m_ppGameObjects[1]->Rotate(0, -90, 160);
-	m_ppGameObjects[1]->SetFrameName("Shovel");
-	//m_ppGameObjects[1]->price = 80;
-	m_ppGameObjects[1]->SetPosition(positions[1]);
+	m_GameObjects[1] = new Shovel(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pShovelModel);
+	m_GameObjects[1]->SetScale(1, 1, 1);
+	m_GameObjects[1]->Rotate(0, -90, 160);
+	m_GameObjects[1]->SetFrameName("Shovel");
+	m_GameObjects[1]->SetPosition(positions[1]);
 
-	static_cast<Item*>(m_ppGameObjects[1])->SetUniqueID(itemIDs[1]);
-	static_cast<Item*>(m_ppGameObjects[1])->SetPrice(itemPrices[1]);
-	g_items[itemIDs[1]] = static_cast<Item*>(m_ppGameObjects[1]);
+	static_cast<Item*>(m_GameObjects[1])->SetUniqueID(itemIDs[1]);
+	static_cast<Item*>(m_GameObjects[1])->SetPrice(itemPrices[1]);
+	g_items[itemIDs[1]] = static_cast<Item*>(m_GameObjects[1]);
 
 	if (pShovelModel) delete pShovelModel;
 
@@ -248,15 +246,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pWhistleModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Whistle.bin", NULL);
-	m_ppGameObjects[2] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pWhistleModel);
-	m_ppGameObjects[2]->SetScale(1, 1, 1);
-	m_ppGameObjects[2]->SetFrameName("Whistle");
-	//m_ppGameObjects[2]->price = 30;
-	m_ppGameObjects[2]->SetPosition(positions[2]);
+	m_GameObjects[2] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pWhistleModel);
+	m_GameObjects[2]->SetScale(1, 1, 1);
+	m_GameObjects[2]->SetFrameName("Whistle");
+	m_GameObjects[2]->SetPosition(positions[2]);
 
-	static_cast<Item*>(m_ppGameObjects[2])->SetUniqueID(itemIDs[2]);
-	static_cast<Item*>(m_ppGameObjects[2])->SetPrice(itemPrices[2]);
-	g_items[itemIDs[2]] = static_cast<Item*>(m_ppGameObjects[2]);
+	static_cast<Item*>(m_GameObjects[2])->SetUniqueID(itemIDs[2]);
+	static_cast<Item*>(m_GameObjects[2])->SetPrice(itemPrices[2]);
+	g_items[itemIDs[2]] = static_cast<Item*>(m_GameObjects[2]);
 
 	if (pWhistleModel) delete pWhistleModel;
 
@@ -265,15 +262,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pGoldbarModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Goldbar.bin", NULL);
-	m_ppGameObjects[3] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pGoldbarModel);
-	m_ppGameObjects[3]->SetScale(1, 1, 1);
-	m_ppGameObjects[3]->SetFrameName("Goldbar");
-	//m_ppGameObjects[3]->price = 30;
-	m_ppGameObjects[3]->SetPosition(positions[3]);
+	m_GameObjects[3] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pGoldbarModel);
+	m_GameObjects[3]->SetScale(1, 1, 1);
+	m_GameObjects[3]->SetFrameName("Goldbar");
+	m_GameObjects[3]->SetPosition(positions[3]);
 
-	static_cast<Item*>(m_ppGameObjects[3])->SetUniqueID(itemIDs[3]);
-	static_cast<Item*>(m_ppGameObjects[3])->SetPrice(itemPrices[3]);
-	g_items[itemIDs[3]] = static_cast<Item*>(m_ppGameObjects[3]);
+	static_cast<Item*>(m_GameObjects[3])->SetUniqueID(itemIDs[3]);
+	static_cast<Item*>(m_GameObjects[3])->SetPrice(itemPrices[3]);
+	g_items[itemIDs[3]] = static_cast<Item*>(m_GameObjects[3]);
 
 	if (pGoldbarModel) delete pGoldbarModel;
 
@@ -281,15 +277,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pCoinModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Coin.bin", NULL);
-	m_ppGameObjects[4] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCoinModel);
-	m_ppGameObjects[4]->SetScale(2, 2, 2);
-	m_ppGameObjects[4]->SetFrameName("Coin");
-	//m_ppGameObjects[2]->price = 30;
-	m_ppGameObjects[4]->SetPosition(positions[4]);
+	m_GameObjects[4] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCoinModel);
+	m_GameObjects[4]->SetScale(2, 2, 2);
+	m_GameObjects[4]->SetFrameName("Coin");
+	m_GameObjects[4]->SetPosition(positions[4]);
 
-	static_cast<Item*>(m_ppGameObjects[4])->SetUniqueID(itemIDs[4]);
-	static_cast<Item*>(m_ppGameObjects[4])->SetPrice(itemPrices[4]);
-	g_items[itemIDs[4]] = static_cast<Item*>(m_ppGameObjects[4]);
+	static_cast<Item*>(m_GameObjects[4])->SetUniqueID(itemIDs[4]);
+	static_cast<Item*>(m_GameObjects[4])->SetPrice(itemPrices[4]);
+	g_items[itemIDs[4]] = static_cast<Item*>(m_GameObjects[4]);
 
 	if (pCoinModel) delete pCoinModel;
 
@@ -297,15 +292,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pCanister1Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_01.bin", NULL);
-	m_ppGameObjects[5] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister1Model);
-	m_ppGameObjects[5]->SetScale(1, 1, 1);
-	m_ppGameObjects[5]->SetFrameName("Canisters_01");
-	//m_ppGameObjects[2]->price = 30;
-	m_ppGameObjects[5]->SetPosition(positions[5]);
+	m_GameObjects[5] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister1Model);
+	m_GameObjects[5]->SetScale(1, 1, 1);
+	m_GameObjects[5]->SetFrameName("Canisters_01");
+	m_GameObjects[5]->SetPosition(positions[5]);
 
-	static_cast<Item*>(m_ppGameObjects[5])->SetUniqueID(itemIDs[5]);
-	static_cast<Item*>(m_ppGameObjects[5])->SetPrice(itemPrices[5]);
-	g_items[itemIDs[5]] = static_cast<Item*>(m_ppGameObjects[5]);
+	static_cast<Item*>(m_GameObjects[5])->SetUniqueID(itemIDs[5]);
+	static_cast<Item*>(m_GameObjects[5])->SetPrice(itemPrices[5]);
+	g_items[itemIDs[5]] = static_cast<Item*>(m_GameObjects[5]);
 
 	if (pCanister1Model) delete pCanister1Model;
 
@@ -313,15 +307,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pCanister2Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_02.bin", NULL);
-	m_ppGameObjects[6] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister2Model);
-	m_ppGameObjects[6]->SetScale(1, 1, 1);
-	m_ppGameObjects[6]->SetFrameName("Canisters_02");
-	//m_ppGameObjects[2]->price = 30;
-	m_ppGameObjects[6]->SetPosition(positions[6]);
+	m_GameObjects[6] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister2Model);
+	m_GameObjects[6]->SetScale(1, 1, 1);
+	m_GameObjects[6]->SetFrameName("Canisters_02");
+	m_GameObjects[6]->SetPosition(positions[6]);
 
-	static_cast<Item*>(m_ppGameObjects[6])->SetUniqueID(itemIDs[6]);
-	static_cast<Item*>(m_ppGameObjects[6])->SetPrice(itemPrices[6]);
-	g_items[itemIDs[6]] = static_cast<Item*>(m_ppGameObjects[6]);
+	static_cast<Item*>(m_GameObjects[6])->SetUniqueID(itemIDs[6]);
+	static_cast<Item*>(m_GameObjects[6])->SetPrice(itemPrices[6]);
+	g_items[itemIDs[6]] = static_cast<Item*>(m_GameObjects[6]);
 
 	if (pCanister2Model) delete pCanister2Model;
 
@@ -329,15 +322,14 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 
 	CLoadedModelInfo* pCanister3Model = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Item/Canisters_03.bin", NULL);
-	m_ppGameObjects[7] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister3Model);
-	m_ppGameObjects[7]->SetScale(1, 1, 1);
-	m_ppGameObjects[7]->SetFrameName("Canisters_03");
-	//m_ppGameObjects[2]->price = 30;
-	m_ppGameObjects[7]->SetPosition(positions[7]);
+	m_GameObjects[7] = new Whistle(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, pCanister3Model);
+	m_GameObjects[7]->SetScale(1, 1, 1);
+	m_GameObjects[7]->SetFrameName("Canisters_03");
+	m_GameObjects[7]->SetPosition(positions[7]);
 
-	static_cast<Item*>(m_ppGameObjects[7])->SetUniqueID(itemIDs[7]);
-	static_cast<Item*>(m_ppGameObjects[7])->SetPrice(itemPrices[7]);
-	g_items[itemIDs[7]] = static_cast<Item*>(m_ppGameObjects[7]);
+	static_cast<Item*>(m_GameObjects[7])->SetUniqueID(itemIDs[7]);
+	static_cast<Item*>(m_GameObjects[7])->SetPrice(itemPrices[7]);
+	g_items[itemIDs[7]] = static_cast<Item*>(m_GameObjects[7]);
 
 	if (pCanister3Model) delete pCanister3Model;
 
@@ -364,8 +356,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	if (pOtherPlayerModel) delete pOtherPlayerModel;
 
 	// 인벤토리 UI 및 상점
-	m_nShaders = 10;
-	m_ppShaders = new CShader * [m_nShaders];
+	m_Shaders.clear();
+	m_Shaders.resize(10);
 
 	CTexture* pTextureinven = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
 	pTextureinven->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/inven.dds", RESOURCE_TEXTURE2D, 0);
@@ -417,28 +409,28 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
 	pTextureItem1Shader->SetMesh(0, pMesh);
 	pTextureItem1Shader->SetTexture(pTextureinven);
-	m_ppShaders[0] = pTextureItem1Shader;
+	m_Shaders[0] = pTextureItem1Shader;
 
 	CTextureToScreenShader* pTextureItem2Shader = new CTextureToScreenShader(1);
 	pTextureItem2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	CScreenRectMeshTextured* pMesh1 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.125f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
 	pTextureItem2Shader->SetMesh(0, pMesh1);
 	pTextureItem2Shader->SetTexture(pTextureinven);
-	m_ppShaders[1] = pTextureItem2Shader;
+	m_Shaders[1] = pTextureItem2Shader;
 
 	CTextureToScreenShader* pTextureItem3Shader = new CTextureToScreenShader(1);
 	pTextureItem3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	CScreenRectMeshTextured* pMesh2 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.25f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
 	pTextureItem3Shader->SetMesh(0, pMesh2);
 	pTextureItem3Shader->SetTexture(pTextureinven);
-	m_ppShaders[2] = pTextureItem3Shader;
+	m_Shaders[2] = pTextureItem3Shader;
 
 	CTextureToScreenShader* pTextureItem4Shader = new CTextureToScreenShader(1);
 	pTextureItem4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	CScreenRectMeshTextured* pMesh3 = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.02f + 0.375f, 0.225f * 0.5f, -0.65f, 0.4f * 0.5f);
 	pTextureItem4Shader->SetMesh(0, pMesh3);
 	pTextureItem4Shader->SetTexture(pTextureinven);
-	m_ppShaders[3] = pTextureItem4Shader;
+	m_Shaders[3] = pTextureItem4Shader;
 
 	CTextureToScreenShader* pInventoryShader = new CTextureToScreenShader(1);
 	pInventoryShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -448,7 +440,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	CScreenRectMeshTextured* pInventoryMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, -0.5f + 0.5f, 1.0f * 0.5f, -0.6f, 0.5f * 0.5f);
 	pInventoryShader->SetMesh(0, pInventoryMesh);
 	pInventoryShader->SetTexture(pTexture);
-	m_ppShaders[4] = pInventoryShader;
+	m_Shaders[4] = pInventoryShader;
 
 	//상점
 	CShopShader* pShopShader = new CShopShader(1);
@@ -463,7 +455,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pShopShader->SetTexture(pShopTexture);
 	pShopShader->SetVisible(false);
 
-	m_ppShaders[5] = pShopShader;
+	m_Shaders[5] = pShopShader;
 
 	//상점 4칸
 	CTextureToScreenShader* pShopSpace1Shader = new CTextureToScreenShader(1);
@@ -472,7 +464,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pShopSpace1Shader->SetMesh(0, pShopMesh1);
 	pShopSpace1Shader->SetTexture(pTextureinven);
 	pShopSpace1Shader->SetVisible(false);
-	m_ppShaders[6] = pShopSpace1Shader;
+	m_Shaders[6] = pShopSpace1Shader;
 
 	CTextureToScreenShader* pShopSpace2Shader = new CTextureToScreenShader(1);
 	pShopSpace2Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -480,7 +472,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pShopSpace2Shader->SetMesh(0, pShopMesh2);
 	pShopSpace2Shader->SetTexture(pTextureinven);
 	pShopSpace2Shader->SetVisible(false);
-	m_ppShaders[7] = pShopSpace2Shader;
+	m_Shaders[7] = pShopSpace2Shader;
 
 	CTextureToScreenShader* pShopSpace3Shader = new CTextureToScreenShader(1);
 	pShopSpace3Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -488,7 +480,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pShopSpace3Shader->SetMesh(0, pShopMesh3);
 	pShopSpace3Shader->SetTexture(pTextureinven);
 	pShopSpace3Shader->SetVisible(false);
-	m_ppShaders[8] = pShopSpace3Shader;
+	m_Shaders[8] = pShopSpace3Shader;
 
 	CTextureToScreenShader* pShopSpace4Shader = new CTextureToScreenShader(1);
 	pShopSpace4Shader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -496,7 +488,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pShopSpace4Shader->SetMesh(0, pShopMesh4);
 	pShopSpace4Shader->SetTexture(pTextureinven);
 	pShopSpace4Shader->SetVisible(false);
-	m_ppShaders[9] = pShopSpace4Shader;
+	m_Shaders[9] = pShopSpace4Shader;
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -506,31 +498,29 @@ void CScene::ReleaseObjects()
 	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
 	if (m_pd3dCbvSrvDescriptorHeap) m_pd3dCbvSrvDescriptorHeap->Release();
 
-	if (m_ppGameObjects)
+	for (auto* obj : m_GameObjects)
 	{
-		for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Release();
-		delete[] m_ppGameObjects;
+		if (obj) obj->Release();
 	}
+	m_GameObjects.clear();
 
-	if (m_ppShaders)
+	for (auto* shader : m_Shaders)
 	{
-		for (int i = 0; i < m_nShaders; i++)
-		{
-			m_ppShaders[i]->ReleaseShaderVariables();
-			m_ppShaders[i]->ReleaseObjects();
-			m_ppShaders[i]->Release();
-		}
-		delete[] m_ppShaders;
+		if (!shader) continue;
+		shader->ReleaseShaderVariables();
+		shader->ReleaseObjects();
+		shader->Release();
 	}
+	m_Shaders.clear();
 
 	if (m_pTerrain) delete m_pTerrain;
 	if (m_pSkyBox) delete m_pSkyBox;
 
-	if (m_ppMonsters)
+	for (auto* monster : m_Monsters)
 	{
-		for (int i = 0; i < m_nMonster; i++) if (m_ppMonsters[i]) m_ppMonsters[i]->Release();
-		delete[] m_ppMonsters;
+		if (monster) monster->Release();
 	}
+	m_Monsters.clear();
 
 	ReleaseShaderVariables();
 
@@ -792,9 +782,9 @@ void CScene::ReleaseUploadBuffers()
 	if (m_pSkyBox) m_pSkyBox->ReleaseUploadBuffers();
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 
-	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->ReleaseUploadBuffers();
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->ReleaseUploadBuffers();
-	for (int i = 0; i < m_nMonster; i++)if (m_ppMonsters[i]) m_ppMonsters[i]->ReleaseUploadBuffers();
+	for (auto* shader : m_Shaders) if (shader) shader->ReleaseUploadBuffers();
+	for (auto* obj : m_GameObjects) if (obj) obj->ReleaseUploadBuffers();
+	for (auto* monster : m_Monsters) if (monster) monster->ReleaseUploadBuffers();
 }
 
 void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstantBufferViews, int nShaderResourceViews)
@@ -911,24 +901,28 @@ void CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 							it->second->ChangeExistState(false);						
 							m_pPlayer->m_pHeldItems[i] = nullptr;
 						
-							for (int j = 0; j < m_nGameObjects; ++j) {
-								Item* pGameObjectItem = dynamic_cast<Item*>(m_ppGameObjects[j]);
+							for (auto* obj : m_GameObjects) {
+								Item* pGameObjectItem = dynamic_cast<Item*>(obj);
 								if (pGameObjectItem && pGameObjectItem->GetUniqueID() == itemID) {
-									m_ppGameObjects[j] = nullptr;
+									// 같은 id 아이템 삭제
 									break;
 								}
 							}
 						}
 						auto texIt = m_textureMap.find("inven");
-						if (texIt != m_textureMap.end()) {
-							auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[i]);
-							auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[i + 6]);
-							if (pShader) {
-								pShader->SetTexture(texIt->second);
-							}
-							if (pShader1) {
-								pShader1->SetTexture(texIt->second);
-								dynamic_cast<CShopShader*>(m_ppShaders[5])->price[i] = L"0";
+						if (texIt != m_textureMap.end())
+						{
+							if (i < static_cast<int>(m_Shaders.size()) &&
+								i + 6 < static_cast<int>(m_Shaders.size()) &&
+								5 < static_cast<int>(m_Shaders.size()))
+							{
+								auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]);
+								auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i + 6]);
+								auto* pShop = dynamic_cast<CShopShader*>(m_Shaders[5]);
+
+								if (pShader)pShader->SetTexture(texIt->second);						
+								if (pShader1)pShader1->SetTexture(texIt->second);
+								if (pShop)pShop->price[i] = L"0";							
 							}
 						}
 					}
@@ -971,9 +965,9 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		{
 			bool bPickedUp = false;
 
-			for (int i = 0; i < m_nGameObjects; ++i)
+			for(auto* obj : m_GameObjects)
 			{
-				CGameObject* pObj = m_ppGameObjects[i];
+				CGameObject* pObj = obj;
 				if (!pObj) continue;
 
 				Item* pItem = dynamic_cast<Item*>(pObj);
@@ -1000,13 +994,13 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 							else continue;
 						if (newIndex < 4 && newIndex > -1)
 						{
-							auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[newIndex]);
-							auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[newIndex + 6]);
+							auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex]);
+							auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[newIndex + 6]);
 							if (pShader) pShader->SetTexture(it->second);
 							if (pShader1)
 							{
 								pShader1->SetTexture(it->second);
-								dynamic_cast<CShopShader*>(m_ppShaders[5])->price[newIndex] = std::to_wstring(pItem->GetPrice());
+								dynamic_cast<CShopShader*>(m_Shaders[5])->price[newIndex] = std::to_wstring(pItem->GetPrice());
 							}
 						}
 					}
@@ -1023,13 +1017,13 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 					auto it = m_textureMap.find("inven");
 					if (it != m_textureMap.end())
 					{
-						auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[index]);
-						auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_ppShaders[index + 6]);
+						auto* pShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index]);
+						auto* pShader1 = dynamic_cast<CTextureToScreenShader*>(m_Shaders[index + 6]);
 						if (pShader) pShader->SetTexture(it->second);
 						if (pShader1)
 						{
 							pShader1->SetTexture(it->second);
-							dynamic_cast<CShopShader*>(m_ppShaders[5])->price[index] = L"0";
+							dynamic_cast<CShopShader*>(m_Shaders[5])->price[index] = L"0";
 						}
 					}
 				}
@@ -1039,8 +1033,13 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		}
 		case VK_TAB:		
 			isShop = !isShop;
-			for (int i = 5; i < 10; ++i)
-				dynamic_cast<CTextureToScreenShader*>(m_ppShaders[i])->visible = isShop;
+			for (int i = 5; i < 10 && i < static_cast<int>(m_Shaders.size()); ++i)
+			{
+				if (auto* texShader = dynamic_cast<CTextureToScreenShader*>(m_Shaders[i]))
+				{
+					texShader->visible = isShop;
+				}
+			}
 			break;
 		case VK_UP:
 			dynamic_cast<CTerrainPlayer*>(m_pPlayer)->debt -= 1000;
@@ -1060,32 +1059,35 @@ bool CScene::ProcessInput(UCHAR *pKeysBuffer)
 
 void CScene::AnimateObjects(float fTimeElapsed)
 {
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) { 
-		m_ppGameObjects[i]->Animate(fTimeElapsed); 
-
-		if (m_ppGameObjects[i]->isFalling) {
-			XMFLOAT3 pos = m_ppGameObjects[i]->GetPosition();
+	for (auto* obj : m_GameObjects) if (obj) {
+		obj->Animate(fTimeElapsed);
+		if (obj->isFalling) {
+			XMFLOAT3 pos = obj->GetPosition();
 			if (pos.y > 0.1f)
 			{
 				pos.y -= 0.1f;
-				m_ppGameObjects[i]->SetPosition(pos);
-				Item* itemObj = dynamic_cast<Item*>(m_ppGameObjects[i]);
+				obj->SetPosition(pos);
+				Item* itemObj = dynamic_cast<Item*>(obj);
 				if (itemObj) {
-					SendItemMove(itemObj->GetUniqueID(), pos, m_ppGameObjects[i]->GetLook(), m_ppGameObjects[i]->GetRight());
+					SendItemMove(itemObj->GetUniqueID(), pos, obj->GetLook(), obj->GetRight());
 				}
 			}
-			else m_ppGameObjects[i]->isFalling = false;		
+			else obj->isFalling = false;
+
 		}
 	}
-	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 
-	if (m_pLights && m_ppGameObjects[0])
+	for(auto* shader : m_Shaders) if(shader) shader->AnimateObjects(fTimeElapsed);
+
+	// 손전등
+	if (m_pLights && m_GameObjects[0])
 	{	
-		m_pLights[0].m_xmf3Position = m_ppGameObjects[0]->GetPosition();
-		m_pLights[0].m_xmf3Direction = m_ppGameObjects[0]->GetLook();
+		m_pLights[0].m_xmf3Position = m_GameObjects[0]->GetPosition();
+		m_pLights[0].m_xmf3Direction = m_GameObjects[0]->GetLook();
 	}
 
-	if (m_pEffect&& m_ppGameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_ppGameObjects[1]->GetPosition());
+	// 삽
+	if (m_pEffect&& m_GameObjects[1]) m_pEffect->Animate(fTimeElapsed, m_GameObjects[1]->GetPosition());
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -1105,21 +1107,18 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 	if (m_pMap) m_pMap->Render(pd3dCommandList, pCamera);
 
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) { 
-		if (m_ppGameObjects[i]->GetVisible())
-		{
-			m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
-		}
+	for (auto* obj : m_GameObjects) 
+	{
+		if (!obj) continue;
+		if (obj->GetVisible())
+			obj->Render(pd3dCommandList, pCamera);
 	}
   
-	for (int i = 0; i < m_nMonster; i++)
+	for (auto* monster : m_Monsters) 
 	{
-		if (m_ppMonsters[i])
-		{
-			m_ppMonsters[i]->Animate(m_fElapsedTime);
-			//if (!m_ppHierarchicalGameObjects[i]->m_pSkinnedAnimationController) m_ppHierarchicalGameObjects[i]->UpdateTransform(NULL);
-			m_ppMonsters[i]->Render(pd3dCommandList, pCamera);
-		}
+		if (!monster) continue;
+		monster->Animate(m_fElapsedTime);
+		monster->Render(pd3dCommandList, pCamera);
 	}
 
 	m_CollisionManager.Update(m_pPlayer);
@@ -1133,8 +1132,12 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 		if (m_ppOtherPlayers[i]->visible)m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);
 	}
 
-	for (int i = 0; i < m_nShaders; i++) if (dynamic_cast<CTextureToScreenShader*>(m_ppShaders[i])->visible) { 
-		m_ppShaders[i]->Render(pd3dCommandList, pCamera);
+	for (auto* shader : m_Shaders)
+	{
+		if (!shader) continue;
+		auto* texShader = dynamic_cast<CTextureToScreenShader*>(shader);
+		if (texShader && texShader->visible)
+			shader->Render(pd3dCommandList, pCamera);
 	}
 }
 
@@ -1147,18 +1150,18 @@ void CScene::AddItem(long long id, ITEM_TYPE type, const XMFLOAT3& position) {
 	switch (type)
 	{
 	case ITEM_TYPE_SHOVEL:
-		dynamic_cast<Shovel*>(m_ppGameObjects[1])->ChangeExistState(true);
-		dynamic_cast<Shovel*>(m_ppGameObjects[1])->SetPosition(position);
+		dynamic_cast<Shovel*>(m_GameObjects[1])->ChangeExistState(true);
+		dynamic_cast<Shovel*>(m_GameObjects[1])->SetPosition(position);
 		break;
 	case ITEM_TYPE_HANDMAP:
 		break;
 	case ITEM_TYPE_FLASHLIGHT:
-		dynamic_cast<FlashLight*>(m_ppGameObjects[0])->ChangeExistState(true);
-		dynamic_cast<FlashLight*>(m_ppGameObjects[0])->SetPosition(position);
+		dynamic_cast<FlashLight*>(m_GameObjects[0])->ChangeExistState(true);
+		dynamic_cast<FlashLight*>(m_GameObjects[0])->SetPosition(position);
 		break;
 	case ITEM_TYPE_WHISTLE:
-		dynamic_cast<Whistle*>(m_ppGameObjects[2])->ChangeExistState(true);
-		dynamic_cast<Whistle*>(m_ppGameObjects[2])->SetPosition(position);
+		dynamic_cast<Whistle*>(m_GameObjects[2])->ChangeExistState(true);
+		dynamic_cast<Whistle*>(m_GameObjects[2])->SetPosition(position);
 		break;
 	default:
 		std::cerr << "[Error] Unknown item type: " << static_cast<int>(type) << std::endl;
@@ -1182,8 +1185,8 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 
 	CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 100); 
 
-	m_nShaders = 1;
-	m_ppShaders = new CShader * [m_nShaders];
+	m_Shaders.clear();
+	m_Shaders.resize(1);
 
 	CTextureToScreenShader* pTextureToScreenShader = new CTextureToScreenShader(1);
 	pTextureToScreenShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -1200,16 +1203,16 @@ void CStartScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	//pTextureToScreenShader->SetMesh(1, pMesh);
 	pTextureToScreenShader->SetTexture(pTexture);
 
-	m_ppShaders[0] = pTextureToScreenShader;
+	m_Shaders[0] = pTextureToScreenShader;
 
-	m_nGameObjects = 2;
-	m_ppGameObjects = new CGameObject * [m_nGameObjects];
+	m_GameObjects.clear();
+	m_GameObjects.resize(2);
 
 	m_pFontID = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter ID : ", -0.5f, -0.25f);
-	m_ppGameObjects[0] = m_pFontID;
+	m_GameObjects[0] = m_pFontID;
 
 	m_pFontIP = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Enter IP : ", -0.5f, -0.55f);
-	m_ppGameObjects[1] = m_pFontIP;
+	m_GameObjects[1] = m_pFontIP;
 
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
@@ -1219,22 +1222,20 @@ void CStartScene::ReleaseObjects()
 {
 	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
 
-	if (m_ppShaders)
+	for (auto* shader : m_Shaders)
 	{
-		for (int i = 0; i < m_nShaders; i++)
-		{
-			m_ppShaders[i]->ReleaseShaderVariables();
-			m_ppShaders[i]->ReleaseObjects();
-			m_ppShaders[i]->Release();
-		}
-		delete[] m_ppShaders;
+		if (!shader) continue;
+		shader->ReleaseShaderVariables();
+		shader->ReleaseObjects();
+		shader->Release();
 	}
+	m_Shaders.clear();
 
-	if (m_ppGameObjects)
+	for (auto* obj : m_GameObjects)
 	{
-		for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Release();
-		delete[] m_ppGameObjects;
+		if (obj) obj->Release();
 	}
+	m_GameObjects.clear();
 }
 
 void CStartScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -1247,8 +1248,8 @@ void CStartScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 
 	UpdateShaderVariables(pd3dCommandList);
 
-	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
-	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
+	for (auto* shader : m_Shaders) if (shader) shader->Render(pd3dCommandList, pCamera);
+	for (auto* obj : m_GameObjects) if (obj) obj->Render(pd3dCommandList, pCamera);
 }
 
 void CStartScene::AnimateObjects(float fTimeElapsed)
@@ -1329,8 +1330,8 @@ void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 
 	CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 100);
 
-	m_nShaders = 1;
-	m_ppShaders = new CShader * [m_nShaders];
+	m_Shaders.clear();
+	m_Shaders.resize(1);
 
 	CTextureToScreenShader* pTextureToScreenShader = new CTextureToScreenShader(1);
 	pTextureToScreenShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -1347,7 +1348,7 @@ void CEndScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 	//pTextureToScreenShader->SetMesh(1, pMesh);
 	pTextureToScreenShader->SetTexture(pTexture);
 
-	m_ppShaders[0] = pTextureToScreenShader;
+	m_Shaders[0] = pTextureToScreenShader;
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -1356,16 +1357,14 @@ void CEndScene::ReleaseObjects()
 {
 	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
 
-	if (m_ppShaders)
+	for (auto* shader : m_Shaders)
 	{
-		for (int i = 0; i < m_nShaders; i++)
-		{
-			m_ppShaders[i]->ReleaseShaderVariables();
-			m_ppShaders[i]->ReleaseObjects();
-			m_ppShaders[i]->Release();
-		}
-		delete[] m_ppShaders;
+		if (!shader) continue;
+		shader->ReleaseShaderVariables();
+		shader->ReleaseObjects();
+		shader->Release();
 	}
+	m_Shaders.clear();
 }
 
 void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -1378,5 +1377,5 @@ void CEndScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCam
 
 	UpdateShaderVariables(pd3dCommandList);
 
-	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
+	for(auto* shader : m_Shaders) if(shader) shader->Render(pd3dCommandList, pCamera);
 }

@@ -331,10 +331,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 			case VK_F9:
 				ChangeSwapChainState();
 				break;
-			case VK_DOWN:
-				cout << "player pos - " << m_pPlayer->GetPosition().x << ", " << m_pPlayer->GetPosition().y << ", " << m_pPlayer->GetPosition().z << endl;
-				cout << "flashlight pos - " << m_pScene->m_ppGameObjects[0]->GetPosition().x << ", " << m_pScene->m_ppGameObjects[0]->GetPosition().y << ", " << m_pScene->m_ppGameObjects[0]->GetPosition().z << endl;
-				break;
 			}
 			break;
 		default:
@@ -510,11 +506,10 @@ void CGameFramework::BuildObjects()
 	m_pScene->m_pPlayer = m_pPlayer = m_pScene->GetPlayer();
 	m_pCamera = m_pPlayer->ChangeCamera(THIRD_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
 
-	if (m_nCurrentScene == 1)
-	{ 
+	// 공격을 위한 몬스터의 플레이어 세팅
+	//if (m_nCurrentScene == 1)
+	//	m_pScene->m_ppMonsters[0]->SetPlayer(m_pPlayer);
 
-		m_pScene->m_ppMonsters[0]->SetPlayer(m_pPlayer);
-	}
 
 	m_pd3dCommandList->Close();
 	ID3D12CommandList *ppd3dCommandLists[] = { m_pd3dCommandList };
@@ -631,9 +626,9 @@ void CGameFramework::AnimateObjects()
 	if (m_pScene) { 
 		m_pScene->AnimateObjects(fTimeElapsed);
 		if (m_pScene->m_ppOtherPlayers) m_pScene->m_ppOtherPlayers[0]->Animate(m_pScene->m_ppOtherPlayers[0]->targetAnim, fTimeElapsed);
-		if (m_pScene->m_ppMonsters) 
-			for(int i=0;i< m_pScene->m_nMonster; ++i)
-			m_pScene->m_ppMonsters[i]->Animate(fTimeElapsed);
+		if (m_pScene->m_Monsters.size() > 0)
+			for (auto* monster : m_pScene->m_Monsters)
+				monster->Animate(fTimeElapsed);
 	}
 
 	m_pPlayer->Animate(fTimeElapsed);
