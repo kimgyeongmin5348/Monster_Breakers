@@ -47,30 +47,30 @@ struct LIGHTS
 	int									m_nLights;
 };
 
-//ID3D12Resource* m_pd3dShadowMap = nullptr;
-//D3D12_CPU_DESCRIPTOR_HANDLE m_d3dShadowDSV = {};
-//D3D12_GPU_DESCRIPTOR_HANDLE m_d3dShadowSRV = {}; 
+////ID3D12Resource* m_pd3dShadowMap = nullptr;
+////D3D12_CPU_DESCRIPTOR_HANDLE m_d3dShadowDSV = {};
+////D3D12_GPU_DESCRIPTOR_HANDLE m_d3dShadowSRV = {}; 
+////
+////ID3D12DescriptorHeap* m_pd3dShadowDsvHeap = nullptr; 
 //
-//ID3D12DescriptorHeap* m_pd3dShadowDsvHeap = nullptr; 
-
-struct CB_SHADOW_INFO
-{
-	XMFLOAT4X4 m_xmf4x4LightView;
-	XMFLOAT4X4 m_xmf4x4LightProj;
-	float      m_fShadowBias;
-	float      pad0[3];
-	XMFLOAT2   m_xmf2ShadowTexel;
-	float      pad1[2];
-};
-
-//ID3D12Resource* m_pd3dcbShadow = nullptr;
-//CB_SHADOW_INFO* m_pcbMappedShadow = nullptr;
+//struct CB_SHADOW_INFO
+//{
+//	XMFLOAT4X4 m_xmf4x4LightView;
+//	XMFLOAT4X4 m_xmf4x4LightProj;
+//	float      m_fShadowBias;
+//	float      pad0[3];
+//	XMFLOAT2   m_xmf2ShadowTexel;
+//	float      pad1[2];
+//};
 //
-//CShadowShader* m_pShadowShader = nullptr;
-//CSkinnedShadowShader* m_pSkinnedShadowShader = nullptr;
-//
-//D3D12_VIEWPORT m_ShadowViewport = {};
-//D3D12_RECT     m_ShadowScissor = {};
+////ID3D12Resource* m_pd3dcbShadow = nullptr;
+////CB_SHADOW_INFO* m_pcbMappedShadow = nullptr;
+////
+////CShadowShader* m_pShadowShader = nullptr;
+////CSkinnedShadowShader* m_pSkinnedShadowShader = nullptr;
+////
+////D3D12_VIEWPORT m_ShadowViewport = {};
+////D3D12_RECT     m_ShadowScissor = {};
 
 class CScene
 {
@@ -95,7 +95,7 @@ public:
 	bool ProcessInput(UCHAR *pKeysBuffer);
     virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
+	//virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv);
 
 	void ReleaseUploadBuffers();
 
@@ -105,18 +105,18 @@ public:
 	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList);
 
-protected:
+//protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
-	virtual void RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
-
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	//
 	// (선택) ShadowPass만 분리하고 싶으면
-	virtual void RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList);
-
-protected:
-	// 현재 프레임 백버퍼 핸들 보관(오버로드간 브릿지)
-	D3D12_CPU_DESCRIPTOR_HANDLE m_CurrentRTV = {};
-	D3D12_CPU_DESCRIPTOR_HANDLE m_CurrentDSV = {};
-	bool m_bHasCurrentRT = false;
+	//virtual void RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList);
+	//
+//protected:
+	//// 현재 프레임 백버퍼 핸들 보관(오버로드간 브릿지)
+	//D3D12_CPU_DESCRIPTOR_HANDLE m_CurrentRTV = {};
+	//D3D12_CPU_DESCRIPTOR_HANDLE m_CurrentDSV = {};
+	//bool m_bHasCurrentRT = false;
 
 private:
 	std::vector<CTexture*> m_UITextures;
@@ -137,27 +137,27 @@ public:
 	ID3D12RootSignature						*m_pd3dGraphicsRootSignature = NULL;
 	ID3D12Device* Device = NULL;
 	ID3D12GraphicsCommandList* Commandlist = NULL;
-
-public:
-	// ----- Shadow Mapping -----
-	static const UINT SHADOW_MAP_SIZE = 2048;
-	static const UINT SHADOW_SRV_INDEX = 999; // SRV heap (0~999 중 마지막 사용)
-
-	ID3D12Resource* m_pd3dShadowMap = nullptr;
-	ID3D12DescriptorHeap* m_pd3dShadowDsvHeap = nullptr;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_d3dShadowDSV = {};
-	D3D12_GPU_DESCRIPTOR_HANDLE m_d3dShadowSRV = {};
-
-	ID3D12Resource* m_pd3dcbShadow = nullptr;
-	CB_SHADOW_INFO* m_pcbMappedShadow = nullptr;
-
-	CShadowShader* m_pShadowShader = nullptr;
-	CSkinnedShadowShader* m_pSkinnedShadowShader = nullptr;
-
-	D3D12_VIEWPORT m_ShadowViewport = {};
-	D3D12_RECT     m_ShadowScissor = {};
-
-	bool m_bEnableShadow = false;
+//
+//public:
+//	// ----- Shadow Mapping -----
+//	static const UINT SHADOW_MAP_SIZE = 2048;
+//	static const UINT SHADOW_SRV_INDEX = 999; // SRV heap (0~999 중 마지막 사용)
+//
+//	ID3D12Resource* m_pd3dShadowMap = nullptr;
+//	ID3D12DescriptorHeap* m_pd3dShadowDsvHeap = nullptr;
+//	D3D12_CPU_DESCRIPTOR_HANDLE m_d3dShadowDSV = {};
+//	D3D12_GPU_DESCRIPTOR_HANDLE m_d3dShadowSRV = {};
+//
+//	ID3D12Resource* m_pd3dcbShadow = nullptr;
+//	CB_SHADOW_INFO* m_pcbMappedShadow = nullptr;
+//
+//	CShadowShader* m_pShadowShader = nullptr;
+//	CSkinnedShadowShader* m_pSkinnedShadowShader = nullptr;
+//
+//	D3D12_VIEWPORT m_ShadowViewport = {};
+//	D3D12_RECT     m_ShadowScissor = {};
+//
+//	bool m_bEnableShadow = false;
 
 protected:
 	//ID3D12RootSignature					*m_pd3dGraphicsRootSignature = NULL;
@@ -183,7 +183,7 @@ public:
 
 	static D3D12_GPU_DESCRIPTOR_HANDLE CreateConstantBufferViews(ID3D12Device *pd3dDevice, int nConstantBufferViews, ID3D12Resource *pd3dConstantBuffers, UINT nStride);
 	static void CreateShaderResourceViews(ID3D12Device* pd3dDevice, CTexture* pTexture, UINT nDescriptorHeapIndex, UINT nRootParameterStartIndex);
-	void CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	//void CreateShadowResources(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUCbvDescriptorStartHandle() { return(m_d3dCbvCPUDescriptorStartHandle); }
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUCbvDescriptorStartHandle() { return(m_d3dCbvGPUDescriptorStartHandle); }
@@ -270,7 +270,7 @@ public:
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseObjects();
 
-	virtual void RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 	virtual void AnimateObjects(float fTimeElapsed);
 
 	virtual void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
@@ -296,7 +296,7 @@ public:
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseObjects();
 
-	virtual void RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 	virtual void AnimateObjects(float fTimeElapsed);
 
 	virtual void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

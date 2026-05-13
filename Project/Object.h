@@ -487,7 +487,7 @@ public:
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0x00); }
 
 public:
-	virtual void RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList);
+	//virtual void RenderShadow(ID3D12GraphicsCommandList* pd3dCommandList);
 	bool IsSkinned() const { return (m_pSkinnedAnimationController != nullptr); }
 
 	void FindAndSetSkinnedMesh(CSkinnedMesh** ppSkinnedMeshes, int* pnSkinnedMesh);
