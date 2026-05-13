@@ -764,7 +764,10 @@ void CShopShader::ReleaseObjects()
 //	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
 //}
 //
-//D3D12_SHADER_BYTECODE CScreenShader::CreatePixelShader()
-//{
-//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextureToScreenHP", "ps_5_1", &m_pd3dPixelShaderBlob);
-//}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+D3D12_SHADER_BYTECODE CScreenShader::CreatePixelShader()
+{
+	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextureToScreenHP", "ps_5_1", &m_pd3dPixelShaderBlob);
+}
