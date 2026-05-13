@@ -670,101 +670,101 @@ void CShopShader::ReleaseObjects()
 	CTextureToScreenShader::ReleaseObjects();
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////
+//D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader()
+//{
+//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSShadow", "vs_5_1", &m_pd3dVertexShaderBlob);
+//}
 //
-D3D12_SHADER_BYTECODE CShadowShader::CreateVertexShader()
-{
-	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSShadow", "vs_5_1", &m_pd3dVertexShaderBlob);
-}
-
-D3D12_SHADER_BYTECODE CShadowShader::CreatePixelShader()
-{
-	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSShadow", "ps_5_1", &m_pd3dPixelShaderBlob);
-}
-
-D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
-{
-	auto rs = CShader::CreateRasterizerState();
-	rs.CullMode = D3D12_CULL_MODE_BACK;
-
-	// Shadow acne 방지용(기본값보다 확실히 효과 있음)
-	rs.DepthBias = 1000;
-	rs.SlopeScaledDepthBias = 1.0f;
-	rs.DepthBiasClamp = 0.0f;
-	return rs;
-}
-
-void CShadowShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
-{
-	::ZeroMemory(&m_d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	m_d3dPipelineStateDesc.pRootSignature = pd3dGraphicsRootSignature;
-	m_d3dPipelineStateDesc.VS = CreateVertexShader();
-	m_d3dPipelineStateDesc.PS = CreatePixelShader();
-	m_d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
-	m_d3dPipelineStateDesc.BlendState = CreateBlendState();
-	m_d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
-	m_d3dPipelineStateDesc.InputLayout = CreateInputLayout();
-	m_d3dPipelineStateDesc.SampleMask = UINT_MAX;
-	m_d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	m_d3dPipelineStateDesc.NumRenderTargets = 0;
-	m_d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	m_d3dPipelineStateDesc.SampleDesc.Count = 1;
-
-	HRESULT hr = pd3dDevice->CreateGraphicsPipelineState(&m_d3dPipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)&m_pd3dPipelineState);
-
-	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
-	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();
-	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
-}
-
-// ----------------- Skinned Shadow -----------------
-
-D3D12_SHADER_BYTECODE CSkinnedShadowShader::CreateVertexShader()
-{
-	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSSkinnedShadow", "vs_5_1", &m_pd3dVertexShaderBlob);
-}
-
-D3D12_SHADER_BYTECODE CSkinnedShadowShader::CreatePixelShader()
-{
-	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSShadow", "ps_5_1", &m_pd3dPixelShaderBlob);
-}
-
-D3D12_RASTERIZER_DESC CSkinnedShadowShader::CreateRasterizerState()
-{
-	auto rs = CShader::CreateRasterizerState();
-	rs.CullMode = D3D12_CULL_MODE_BACK;
-	rs.DepthBias = 1000;
-	rs.SlopeScaledDepthBias = 1.0f;
-	rs.DepthBiasClamp = 0.0f;
-	return rs;
-}
-
-void CSkinnedShadowShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
-{
-	::ZeroMemory(&m_d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	m_d3dPipelineStateDesc.pRootSignature = pd3dGraphicsRootSignature;
-	m_d3dPipelineStateDesc.VS = CreateVertexShader();
-	m_d3dPipelineStateDesc.PS = CreatePixelShader();
-	m_d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
-	m_d3dPipelineStateDesc.BlendState = CreateBlendState();
-	m_d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
-	m_d3dPipelineStateDesc.InputLayout = CreateInputLayout();
-	m_d3dPipelineStateDesc.SampleMask = UINT_MAX;
-	m_d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	m_d3dPipelineStateDesc.NumRenderTargets = 0;
-	m_d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	m_d3dPipelineStateDesc.SampleDesc.Count = 1;
-
-	HRESULT hr = pd3dDevice->CreateGraphicsPipelineState(&m_d3dPipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)&m_pd3dPipelineState);
-
-	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
-	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();
-	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
-}
-
-D3D12_SHADER_BYTECODE CScreenShader::CreatePixelShader()
-{
-	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextureToScreenHP", "ps_5_1", &m_pd3dPixelShaderBlob);
-}
+//D3D12_SHADER_BYTECODE CShadowShader::CreatePixelShader()
+//{
+//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSShadow", "ps_5_1", &m_pd3dPixelShaderBlob);
+//}
+//
+//D3D12_RASTERIZER_DESC CShadowShader::CreateRasterizerState()
+//{
+//	auto rs = CShader::CreateRasterizerState();
+//	rs.CullMode = D3D12_CULL_MODE_BACK;
+//
+//	// Shadow acne 방지용(기본값보다 확실히 효과 있음)
+//	rs.DepthBias = 1000;
+//	rs.SlopeScaledDepthBias = 1.0f;
+//	rs.DepthBiasClamp = 0.0f;
+//	return rs;
+//}
+//
+//void CShadowShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+//{
+//	::ZeroMemory(&m_d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+//	m_d3dPipelineStateDesc.pRootSignature = pd3dGraphicsRootSignature;
+//	m_d3dPipelineStateDesc.VS = CreateVertexShader();
+//	m_d3dPipelineStateDesc.PS = CreatePixelShader();
+//	m_d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
+//	m_d3dPipelineStateDesc.BlendState = CreateBlendState();
+//	m_d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
+//	m_d3dPipelineStateDesc.InputLayout = CreateInputLayout();
+//	m_d3dPipelineStateDesc.SampleMask = UINT_MAX;
+//	m_d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+//
+//	m_d3dPipelineStateDesc.NumRenderTargets = 0;
+//	m_d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+//	m_d3dPipelineStateDesc.SampleDesc.Count = 1;
+//
+//	HRESULT hr = pd3dDevice->CreateGraphicsPipelineState(&m_d3dPipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)&m_pd3dPipelineState);
+//
+//	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
+//	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();
+//	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
+//}
+//
+//// ----------------- Skinned Shadow -----------------
+//
+//D3D12_SHADER_BYTECODE CSkinnedShadowShader::CreateVertexShader()
+//{
+//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSSkinnedShadow", "vs_5_1", &m_pd3dVertexShaderBlob);
+//}
+//
+//D3D12_SHADER_BYTECODE CSkinnedShadowShader::CreatePixelShader()
+//{
+//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSShadow", "ps_5_1", &m_pd3dPixelShaderBlob);
+//}
+//
+//D3D12_RASTERIZER_DESC CSkinnedShadowShader::CreateRasterizerState()
+//{
+//	auto rs = CShader::CreateRasterizerState();
+//	rs.CullMode = D3D12_CULL_MODE_BACK;
+//	rs.DepthBias = 1000;
+//	rs.SlopeScaledDepthBias = 1.0f;
+//	rs.DepthBiasClamp = 0.0f;
+//	return rs;
+//}
+//
+//void CSkinnedShadowShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+//{
+//	::ZeroMemory(&m_d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+//	m_d3dPipelineStateDesc.pRootSignature = pd3dGraphicsRootSignature;
+//	m_d3dPipelineStateDesc.VS = CreateVertexShader();
+//	m_d3dPipelineStateDesc.PS = CreatePixelShader();
+//	m_d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
+//	m_d3dPipelineStateDesc.BlendState = CreateBlendState();
+//	m_d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
+//	m_d3dPipelineStateDesc.InputLayout = CreateInputLayout();
+//	m_d3dPipelineStateDesc.SampleMask = UINT_MAX;
+//	m_d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+//
+//	m_d3dPipelineStateDesc.NumRenderTargets = 0;
+//	m_d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+//	m_d3dPipelineStateDesc.SampleDesc.Count = 1;
+//
+//	HRESULT hr = pd3dDevice->CreateGraphicsPipelineState(&m_d3dPipelineStateDesc, __uuidof(ID3D12PipelineState), (void**)&m_pd3dPipelineState);
+//
+//	if (m_pd3dVertexShaderBlob) m_pd3dVertexShaderBlob->Release();
+//	if (m_pd3dPixelShaderBlob) m_pd3dPixelShaderBlob->Release();
+//	if (m_d3dPipelineStateDesc.InputLayout.pInputElementDescs) delete[] m_d3dPipelineStateDesc.InputLayout.pInputElementDescs;
+//}
+//
+//D3D12_SHADER_BYTECODE CScreenShader::CreatePixelShader()
+//{
+//	return CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSTextureToScreenHP", "ps_5_1", &m_pd3dPixelShaderBlob);
+//}

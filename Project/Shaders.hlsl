@@ -20,15 +20,15 @@ cbuffer cbGameObjectInfo : register(b2)
 	uint					gnTexturesMask : packoffset(c8);
 };
 
-cbuffer cbShadowInfo : register(b5)
-{
-    matrix gmtxLightView : packoffset(c0); // 4 registers
-    matrix gmtxLightProj : packoffset(c4); // 4 registers
-    float gShadowBias : packoffset(c8.x); // bias
-    float3 _padShadow0 : packoffset(c8.y);
-    float2 gShadowTexel : packoffset(c9.x); // (1/width, 1/height)
-    float2 _padShadow1 : packoffset(c9.z);
-};
+//cbuffer cbShadowInfo : register(b5)
+//{
+//    matrix gmtxLightView : packoffset(c0); // 4 registers
+//    matrix gmtxLightProj : packoffset(c4); // 4 registers
+//    float gShadowBias : packoffset(c8.x); // bias
+//    float3 _padShadow0 : packoffset(c8.y);
+//    float2 gShadowTexel : packoffset(c9.x); // (1/width, 1/height)
+//    float2 _padShadow1 : packoffset(c9.z);
+//};
 
 #include "Light.hlsl"
 
@@ -54,46 +54,46 @@ Texture2D gtxtDetailNormalTexture : register(t12);
 
 SamplerState gssWrap : register(s0);
 
-Texture2D<float> gtxtShadowMap : register(t5);
-SamplerComparisonState gssShadow : register(s3);
+//Texture2D<float> gtxtShadowMap : register(t5);
+//SamplerComparisonState gssShadow : register(s3);
 
-float2 ClipToUV(float4 lightH)
-{
-    float3 ndc = lightH.xyz / lightH.w; // [-1,1]
-    float2 uv;
-    uv.x = ndc.x * 0.5f + 0.5f;
-    uv.y = -ndc.y * 0.5f + 0.5f;
-    return uv;
-}
+//float2 ClipToUV(float4 lightH)
+//{
+//    float3 ndc = lightH.xyz / lightH.w; // [-1,1]
+//    float2 uv;
+//    uv.x = ndc.x * 0.5f + 0.5f;
+//    uv.y = -ndc.y * 0.5f + 0.5f;
+//    return uv;
+//}
 
-float ShadowFactor(float4 lightH)
-{
-    float3 ndc = lightH.xyz / lightH.w;
+//float ShadowFactor(float4 lightH)
+//{
+//    float3 ndc = lightH.xyz / lightH.w;
 
-    // 라이트 frustum 밖이면 그림자 적용 X
-    if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < 0 || ndc.z > 1)
-        return 1.0f;
+//    // 라이트 frustum 밖이면 그림자 적용 X
+//    if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < 0 || ndc.z > 1)
+//        return 1.0f;
 
-    float2 uv = ClipToUV(lightH);
+//    float2 uv = ClipToUV(lightH);
 
-    float currentDepth = ndc.z;
-    float depth = currentDepth - gShadowBias;
+//    float currentDepth = ndc.z;
+//    float depth = currentDepth - gShadowBias;
 
-    // 3x3 PCF
-    float sum = 0.0f;
-    [unroll]
-    for (int y = -1; y <= 1; ++y)
-    {
-        [unroll]
-        for (int x = -1; x <= 1; ++x)
-        {
-            float2 uvo = uv + float2(x, y) * gShadowTexel;
-            sum += gtxtShadowMap.SampleCmpLevelZero(gssShadow, uvo, depth);
-        }
-    }
-    return sum / 9.0f;
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//    // 3x3 PCF
+//    float sum = 0.0f;
+//    [unroll]
+//    for (int y = -1; y <= 1; ++y)
+//    {
+//        [unroll]
+//        for (int x = -1; x <= 1; ++x)
+//        {
+//            float2 uvo = uv + float2(x, y) * gShadowTexel;
+//            sum += gtxtShadowMap.SampleCmpLevelZero(gssShadow, uvo, depth);
+//        }
+//    }
+//    return sum / 9.0f;
+//}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct VS_STANDARD_INPUT
 {
 	float3 position : POSITION;
@@ -111,8 +111,7 @@ struct VS_STANDARD_OUTPUT
 	float3 tangentW : TANGENT;
 	float3 bitangentW : BITANGENT;
 	float2 uv : TEXCOORD;
-	
-    float4 positionLightH : TEXCOORD2;
+    //float4 positionLightH : TEXCOORD2;
 };
 
 VS_STANDARD_OUTPUT VSStandard(VS_STANDARD_INPUT input)
@@ -126,8 +125,8 @@ VS_STANDARD_OUTPUT VSStandard(VS_STANDARD_INPUT input)
 	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
 	output.uv = input.uv;
 
-    float4 posW = float4(output.positionW, 1.0f);
-    output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
+    //float4 posW = float4(output.positionW, 1.0f);
+    //output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
 
 	return(output);
 }
@@ -164,36 +163,37 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
     }
     
     float4 cIllumination = Lighting(input.positionW, normalW);
-    float shadow = ShadowFactor(input.positionLightH);
-    cIllumination.rgb *= shadow;
+    //float shadow = ShadowFactor(input.positionLightH);
+    //cIllumination.rgb *= shadow;
 
-    return lerp(cColor, cIllumination, 0.5f);
+    //return lerp(cColor, cIllumination, 0.5f);
+    return (lerp(cColor, cIllumination, 0.5f));
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct VS_SHADOW_INPUT
-{
-    float3 position : POSITION;
-};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//struct VS_SHADOW_INPUT
+//{
+//    float3 position : POSITION;
+//};
 
-struct VS_SHADOW_OUTPUT
-{
-    float4 position : SV_POSITION;
-};
+//struct VS_SHADOW_OUTPUT
+//{
+//    float4 position : SV_POSITION;
+//};
 
-VS_SHADOW_OUTPUT VSShadow(VS_SHADOW_INPUT input)
-{
-    VS_SHADOW_OUTPUT output;
+//VS_SHADOW_OUTPUT VSShadow(VS_SHADOW_INPUT input)
+//{
+//    VS_SHADOW_OUTPUT output;
 
-    float3 posW = mul(float4(input.position, 1.0f), gmtxGameObject).xyz;
-    output.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
+//    float3 posW = mul(float4(input.position, 1.0f), gmtxGameObject).xyz;
+//    output.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
 
-    return output;
-}
+//    return output;
+//}
 
-float4 PSShadow(VS_SHADOW_OUTPUT input) : SV_TARGET
-{
-    return 0;
-}
+//float4 PSShadow(VS_SHADOW_OUTPUT input) : SV_TARGET
+//{
+//    return 0;
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -249,8 +249,8 @@ VS_STANDARD_OUTPUT VSSkinnedAnimationStandard(VS_SKINNED_STANDARD_INPUT input)
 	output.tangentW = mul(input.tangent, (float3x3)mtxVertexToBoneWorld).xyz;
 	output.bitangentW = mul(input.bitangent, (float3x3)mtxVertexToBoneWorld).xyz;
 
-    float4 posW = float4(output.positionW, 1.0f);
-    output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
+    //float4 posW = float4(output.positionW, 1.0f);
+    //output.positionLightH = mul(mul(posW, gmtxLightView), gmtxLightProj);
 	
 //	output.positionW = mul(float4(input.position, 1.0f), gmtxGameObject).xyz;
 
@@ -260,20 +260,20 @@ VS_STANDARD_OUTPUT VSSkinnedAnimationStandard(VS_SKINNED_STANDARD_INPUT input)
 	return(output);
 }
 
-VS_SHADOW_OUTPUT VSSkinnedShadow(VS_SKINNED_STANDARD_INPUT input)
-{
-    VS_SHADOW_OUTPUT o;
+//VS_SHADOW_OUTPUT VSSkinnedShadow(VS_SKINNED_STANDARD_INPUT input)
+//{
+//    VS_SHADOW_OUTPUT o;
 
-    float4x4 mtxVertexToBoneWorld = (float4x4) 0.0f;
-    for (int i = 0; i < MAX_VERTEX_INFLUENCES; i++)
-    {
-        mtxVertexToBoneWorld += input.weights[i] * mul(gpmtxBoneOffsets[input.indices[i]], gpmtxBoneTransforms[input.indices[i]]);
-    }
+//    float4x4 mtxVertexToBoneWorld = (float4x4) 0.0f;
+//    for (int i = 0; i < MAX_VERTEX_INFLUENCES; i++)
+//    {
+//        mtxVertexToBoneWorld += input.weights[i] * mul(gpmtxBoneOffsets[input.indices[i]], gpmtxBoneTransforms[input.indices[i]]);
+//    }
 
-    float3 posW = mul(float4(input.position, 1.0f), mtxVertexToBoneWorld).xyz;
-    o.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
-    return o;
-}
+//    float3 posW = mul(float4(input.position, 1.0f), mtxVertexToBoneWorld).xyz;
+//    o.position = mul(mul(float4(posW, 1.0f), gmtxLightView), gmtxLightProj);
+//    return o;
+//}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 Texture2D gtxtTexture : register(t0);

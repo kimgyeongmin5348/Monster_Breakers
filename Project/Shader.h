@@ -228,28 +228,28 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-class CShadowShader : public CStandardShader
-{
-public:
-	CShadowShader() {}
-	virtual ~CShadowShader() {}
-
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
-
-	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
-	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-};
-
-class CSkinnedShadowShader : public CSkinnedAnimationStandardShader
-{
-public:
-	CSkinnedShadowShader() {}
-	virtual ~CSkinnedShadowShader() {}
-
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
-
-	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
-	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-};
+//class CShadowShader : public CStandardShader
+//{
+//public:
+//	CShadowShader() {}
+//	virtual ~CShadowShader() {}
+//
+//	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+//	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
+//
+//	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+//	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+//};
+//
+//class CSkinnedShadowShader : public CSkinnedAnimationStandardShader
+//{
+//public:
+//	CSkinnedShadowShader() {}
+//	virtual ~CSkinnedShadowShader() {}
+//
+//	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+//	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
+//
+//	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+//	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+//};
