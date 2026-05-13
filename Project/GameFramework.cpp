@@ -666,7 +666,7 @@ void CGameFramework::FrameAdvance()
 	//WaitForGpuComplete();
 	if (m_pScene) m_pScene->UpdateUI(m_pd3dCommandList);
 
-	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera, d3dRtvCPUDescriptorHandle, d3dDsvCPUDescriptorHandle); //?
+	if (m_pScene) m_pScene->Render(m_pd3dCommandList, m_pCamera);
 
 #ifdef _WITH_PLAYER_TOP
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
