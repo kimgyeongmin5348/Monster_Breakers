@@ -1274,7 +1274,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 
 	m_CollisionManager.Update(m_pPlayer);
 
-	if (m_pEffect) m_pEffect->Render(pd3dCommandList, pCamera);
+	//if (m_pEffect) m_pEffect->Render(pd3dCommandList, pCamera); // ?
 
 	for (int i = 0; i < m_nOtherPlayers; ++i)
 	{

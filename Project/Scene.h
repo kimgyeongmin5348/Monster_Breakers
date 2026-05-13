@@ -107,7 +107,7 @@ public:
 
 //protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
-	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	//virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 	//
 	// (선택) ShadowPass만 분리하고 싶으면
 	//virtual void RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList);
