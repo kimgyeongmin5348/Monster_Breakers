@@ -924,8 +924,30 @@ void CScene::CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstant
 	d3dDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	d3dDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	d3dDescriptorHeapDesc.NodeMask = 0;
-	pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void **)&m_pd3dCbvSrvDescriptorHeap);
+	//pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void **)&m_pd3dCbvSrvDescriptorHeap);
+	// 1. 리턴값(HRESULT)을 받도록 수정
+	HRESULT hr = pd3dDevice->CreateDescriptorHeap(&d3dDescriptorHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)&m_pd3dCbvSrvDescriptorHeap);
 
+	// 2. 만약 실패했다면?
+	if (FAILED(hr))
+	{
+		if (hr == DXGI_ERROR_DEVICE_REMOVED)
+		{
+			// 이전 작업 때문에 GPU가 이미 죽어버린 상태입니다!
+			OutputDebugString(L"[Fatal 에러] Device has been removed!\n");
+		}
+		else if (hr == E_INVALIDARG)
+		{
+			// 파라미터가 잘못되었습니다!
+			OutputDebugString(L"[에러] Invalid Arguments!\n");
+		}
+		else
+		{
+			OutputDebugString(L"[에러] Failed to create Descriptor Heap!\n");
+		}
+
+		return; // 실패했으니 아래의 핸들 얻어오는 코드는 실행하지 않고 탈출
+	}
 	m_d3dCbvCPUDescriptorNextHandle = m_d3dCbvCPUDescriptorStartHandle = m_pd3dCbvSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	m_d3dCbvGPUDescriptorNextHandle = m_d3dCbvGPUDescriptorStartHandle = m_pd3dCbvSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 	m_d3dSrvCPUDescriptorNextHandle.ptr = m_d3dSrvCPUDescriptorStartHandle.ptr = m_d3dCbvCPUDescriptorStartHandle.ptr + (::gnCbvSrvDescriptorIncrementSize * nConstantBufferViews);
