@@ -5,7 +5,7 @@
 #include "SoundManager.h"
 
 CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
-    const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP, int id)
+    const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP, long long id)
     : CGameObject(1), m_fMaxHP(fMaxHP), m_fMonsterHP(fMaxHP)
 {
     CLoadedModelInfo* pMonsterModel = pModel;

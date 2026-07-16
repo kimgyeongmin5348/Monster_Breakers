@@ -1,4 +1,7 @@
 #pragma once
+
+#include <condition_variable>
+
 #include "Common.h"
 #include "Object.h"
 //#include "Player.h"
@@ -35,7 +38,7 @@ class Item;
 //};
 
 struct PendingMonsterSpawn {
-    int      monsterID;
+    long long monsterID;
     XMFLOAT3 position;
     int      state;
 };
@@ -63,7 +66,6 @@ extern int g_thiefIndex;
 
 extern HANDLE g_hIOCP;
 extern SOCKET ConnectSocket;
-extern std::unordered_map<long long, OtherPlayer*> g_other_players;
 extern long long g_myid;
 extern std::string user_name;
 
@@ -88,10 +90,9 @@ extern std::mutex g_monster_mutex;
 void send_hit_damage(long long monsterID, int damage);
 
 void ProcessPacket(char* ptr);
-//void process_data(char* net_buf, size_t io_byte); // ???
 void send_packet(void* packet);
 void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, const XMFLOAT3& right, const uint8_t& animState);
-void InitializeNetwork(char serverIP[]);
+void InitializeNetwork(const char* serverIP);
 void CleanupNetwork();
 
 void LoadingDoneToServer();

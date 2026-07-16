@@ -5,7 +5,9 @@
 //#define SET_DATA_FROM_DATABASE
 #define SERVER_STRESS_TEST
 
-#define MAX_PACKET_SIZE 1024
+// The first byte of every packet stores its complete size, so a packet can
+// never be larger than the range of an unsigned byte.
+constexpr size_t MAX_PACKET_SIZE = 255;
 #define SERVER_PORT 3000
 #define NUM_WORKER_THREADS 4
 #define MAX_USER 5000

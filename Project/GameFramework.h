@@ -86,10 +86,10 @@ public:
 		m_pPlayer->SetPosition(position);
 	}
 
-	void OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state);
+	void OnMonsterSpawned(long long monsterID, const XMFLOAT3& pos, int state);
 	void OnBossSpawned(long long bossID, const XMFLOAT3& pos, int hp, int maxHp);
 	void UpdateMonsterState(CMonster* pMonster, int state);
-	void UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state);
+	void UpdateMonsterPosition(long long monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state);
 
 	void ItemSpawned(long long itemID, const XMFLOAT3& pos, int type, int price);
 	void UpdateItemPosition(long long itemID, const XMFLOAT3& pos);

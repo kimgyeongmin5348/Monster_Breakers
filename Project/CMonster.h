@@ -19,7 +19,7 @@ public:
     CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
         ID3D12RootSignature* pd3dGraphicsRootSignature,
         const char* pstrModelPath, int nAnimationTracks,
-        CLoadedModelInfo* pModel = nullptr, float fMaxHP = 100.0f, int id = -1);
+        CLoadedModelInfo* pModel = nullptr, float fMaxHP = 100.0f, long long id = -1);
     virtual ~CMonster();
 
     virtual void Animate(float fTimeElapsed) override;
@@ -34,8 +34,8 @@ public:
     bool  IsDead()     const { return m_fMonsterHP <= 0.0f; }
 
     void SetPlayer(CPlayer* p) { m_pPlayer = p; }
-    void SetMonsterID(int id) { m_nMonsterID = id; }
-    int  GetMonsterID() const { return m_nMonsterID; }
+    void SetMonsterID(long long id) { m_nMonsterID = id; }
+    long long GetMonsterID() const { return m_nMonsterID; }
 
     // Scene에서 한 줄로 특정 몬스터 종류를 N마리 생성
     // startID부터 순서대로 ID 할당, g_monsters에도 등록
@@ -71,7 +71,7 @@ public:
 
 private:
     CPlayer* m_pPlayer = nullptr;
-    int          m_nMonsterID = -1;
+    long long    m_nMonsterID = -1;
 
     float        m_fMonsterHP = 100.0f;
     float        m_fMaxHP = 1000.0f;

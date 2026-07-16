@@ -27,6 +27,93 @@ std::queue<std::vector<char>> g_sendQueue;
 std::mutex g_sendMutex;
 std::condition_variable g_sendCV;
 
+namespace
+{
+constexpr size_t kPacketHeaderSize = 2;
+
+std::thread g_sendThread;
+std::thread g_recvThread;
+std::mutex g_networkMutex;
+bool g_networkInitialized = false;
+
+bool SendAll(const std::vector<char>& packet)
+{
+    size_t bytesSent = 0;
+
+    while (g_running && bytesSent < packet.size())
+    {
+        WSABUF buffer = {
+            static_cast<ULONG>(packet.size() - bytesSent),
+            const_cast<char*>(packet.data() + bytesSent)
+        };
+        WSAOVERLAPPED overlapped{};
+        overlapped.hEvent = WSACreateEvent();
+        if (overlapped.hEvent == WSA_INVALID_EVENT)
+        {
+            std::cerr << "Failed to create send event: " << WSAGetLastError() << std::endl;
+            return false;
+        }
+
+        DWORD sent = 0;
+        const int result = WSASend(ConnectSocket, &buffer, 1, &sent, 0, &overlapped, nullptr);
+        if (result == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING)
+        {
+            const DWORD waitResult = WSAWaitForMultipleEvents(1, &overlapped.hEvent, TRUE, INFINITE, FALSE);
+            if (waitResult == WSA_WAIT_FAILED ||
+                !WSAGetOverlappedResult(ConnectSocket, &overlapped, &sent, TRUE, nullptr))
+            {
+                if (g_running)
+                    std::cerr << "Send failed: " << WSAGetLastError() << std::endl;
+                WSACloseEvent(overlapped.hEvent);
+                return false;
+            }
+        }
+        else if (result == SOCKET_ERROR)
+        {
+            if (g_running)
+                std::cerr << "Send failed: " << WSAGetLastError() << std::endl;
+            WSACloseEvent(overlapped.hEvent);
+            return false;
+        }
+
+        WSACloseEvent(overlapped.hEvent);
+        if (sent == 0)
+            return false;
+
+        bytesSent += sent;
+    }
+
+    return bytesSent == packet.size();
+}
+
+bool ProcessReceivedBytes(std::vector<char>& bufferedBytes, const char* receivedBytes, size_t receivedSize)
+{
+    bufferedBytes.insert(bufferedBytes.end(), receivedBytes, receivedBytes + receivedSize);
+
+    size_t processedSize = 0;
+    while (bufferedBytes.size() - processedSize >= kPacketHeaderSize)
+    {
+        const auto packetSize = static_cast<unsigned char>(bufferedBytes[processedSize]);
+        if (packetSize < kPacketHeaderSize || packetSize > MAX_PACKET_SIZE)
+        {
+            std::cerr << "Invalid packet size: " << static_cast<unsigned int>(packetSize) << std::endl;
+            return false;
+        }
+
+        if (bufferedBytes.size() - processedSize < packetSize)
+            break;
+
+        ProcessPacket(bufferedBytes.data() + processedSize);
+        processedSize += packetSize;
+    }
+
+    if (processedSize != 0)
+        bufferedBytes.erase(bufferedBytes.begin(), bufferedBytes.begin() + processedSize);
+
+    return true;
+}
+}
+
 WSADATA wsaData;
 
 // 객체 관리 맵
@@ -220,96 +307,74 @@ void send_npc_interact_packet(long long npcID)
 //                      네트워크 코어 로직
 // =================================================================
 
-void SendThread() {
-    while (g_running) {
+void SendThread()
+{
+    while (g_running)
+    {
         std::vector<char> packet;
         {
             std::unique_lock<std::mutex> lock(g_sendMutex);
             g_sendCV.wait(lock, [] { return !g_sendQueue.empty() || !g_running; });
-            if (!g_running) break;
+            if (!g_running)
+                break;
+
             packet = std::move(g_sendQueue.front());
             g_sendQueue.pop();
         }
 
-        WSABUF wsaBuf = { static_cast<ULONG>(packet.size()), packet.data() };
-        WSAOVERLAPPED overlapped = {};
-        overlapped.hEvent = WSACreateEvent();
-
-        DWORD sent = 0;
-        int ret = WSASend(ConnectSocket, &wsaBuf, 1, &sent, 0, &overlapped, nullptr);
-
-        if (ret == SOCKET_ERROR) {
-            if (WSAGetLastError() == WSA_IO_PENDING) {
-                DWORD result = WSAWaitForMultipleEvents(1, &overlapped.hEvent, TRUE, 1000, FALSE);
-                if (result == WSA_WAIT_FAILED) {
-                    std::cerr << "송신 오류: " << WSAGetLastError() << std::endl;
-                    break;
-                }
-                WSAGetOverlappedResult(ConnectSocket, &overlapped, &sent, TRUE, nullptr);
-            }
-            else {
-                std::cerr << "송신 실패: " << WSAGetLastError() << std::endl;
-            }
-        }
-        WSACloseEvent(overlapped.hEvent);
+        if (!SendAll(packet))
+            break;
     }
 }
 
-void RecvThread() {
-    thread_local size_t saved_packet_size = 0;
-    thread_local char packet_buffer[BUF_SIZE];
+void RecvThread()
+{
+    std::vector<char> bufferedBytes;
+    bufferedBytes.reserve(MAX_PACKET_SIZE);
 
-    while (g_running) {
+    while (g_running)
+    {
         char buffer[MAX_PACKET_SIZE];
         WSABUF wsaBuf = { MAX_PACKET_SIZE, buffer };
         DWORD flags = 0, recvBytes = 0;
         WSAOVERLAPPED overlapped = {};
         overlapped.hEvent = WSACreateEvent();
+        if (overlapped.hEvent == WSA_INVALID_EVENT)
+        {
+            std::cerr << "Failed to create receive event: " << WSAGetLastError() << std::endl;
+            break;
+        }
 
-        int ret = WSARecv(ConnectSocket, &wsaBuf, 1, &recvBytes, &flags, &overlapped, nullptr);
+        const int result = WSARecv(ConnectSocket, &wsaBuf, 1, &recvBytes, &flags, &overlapped, nullptr);
 
-        if (ret == SOCKET_ERROR) {
-            if (WSAGetLastError() == WSA_IO_PENDING) {
-                DWORD wait = WSAWaitForMultipleEvents(1, &overlapped.hEvent, TRUE, INFINITE, FALSE);
-                if (wait == WSA_WAIT_FAILED || !WSAGetOverlappedResult(ConnectSocket, &overlapped, &recvBytes, FALSE, &flags)) {
-                    WSACloseEvent(overlapped.hEvent);
-                    break;
-                }
-            }
-            else {
+        if (result == SOCKET_ERROR && WSAGetLastError() == WSA_IO_PENDING)
+        {
+            const DWORD waitResult = WSAWaitForMultipleEvents(1, &overlapped.hEvent, TRUE, INFINITE, FALSE);
+            if (waitResult == WSA_WAIT_FAILED ||
+                !WSAGetOverlappedResult(ConnectSocket, &overlapped, &recvBytes, FALSE, &flags))
+            {
                 WSACloseEvent(overlapped.hEvent);
                 break;
             }
         }
-
-        WSACloseEvent(overlapped.hEvent);
-
-        if (recvBytes == 0) {
-            std::cout << "서버 연결 종료" << std::endl;
-            g_running = false;
+        else if (result == SOCKET_ERROR)
+        {
+            WSACloseEvent(overlapped.hEvent);
             break;
         }
 
-        // 패킷 처리
-        char* ptr = buffer;
-        size_t remaining = recvBytes;
-        while (remaining > 0) {
-            size_t packet_size = ptr[0];
-            if (packet_size == 0) break;
+        WSACloseEvent(overlapped.hEvent);
 
-            if (saved_packet_size + remaining >= packet_size) {
-                memcpy(packet_buffer + saved_packet_size, ptr, packet_size - saved_packet_size);
-                ProcessPacket(packet_buffer);
-                ptr += packet_size - saved_packet_size;
-                remaining -= packet_size - saved_packet_size;
-                saved_packet_size = 0;
-            }
-            else {
-                memcpy(packet_buffer + saved_packet_size, ptr, remaining);
-                saved_packet_size += remaining;
-                remaining = 0;
-            }
+        if (recvBytes == 0)
+        {
+            std::cout << "서버 연결 종료" << std::endl;
+            g_running = false;
+            g_sendCV.notify_all();
+            break;
         }
+
+        if (!ProcessReceivedBytes(bufferedBytes, buffer, recvBytes))
+            break;
     }
 }
 
@@ -317,11 +382,20 @@ void RecvThread() {
 //                      유틸리티 함수
 // =================================================================
 
-void send_packet(void* packet) {
-    unsigned char* p = static_cast<unsigned char*>(packet);
-    size_t packet_size = p[0];
+void send_packet(void* packet)
+{
+    if (!packet || !g_running)
+        return;
 
-    std::vector<char> buf(p, p + packet_size);
+    const auto* p = static_cast<const unsigned char*>(packet);
+    const size_t packetSize = p[0];
+    if (packetSize < kPacketHeaderSize || packetSize > MAX_PACKET_SIZE)
+    {
+        std::cerr << "Invalid outgoing packet size: " << packetSize << std::endl;
+        return;
+    }
+
+    std::vector<char> buf(reinterpret_cast<const char*>(p), reinterpret_cast<const char*>(p) + packetSize);
     {
         std::lock_guard<std::mutex> lock(g_sendMutex);
         g_sendQueue.push(std::move(buf));
@@ -329,53 +403,56 @@ void send_packet(void* packet) {
     g_sendCV.notify_one();
 }
 
-void InitializeNetwork(char serverIP[]) {
-    
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
+void InitializeNetwork(const char* serverIP)
+{
+    std::lock_guard<std::mutex> networkLock(g_networkMutex);
+    if (g_networkInitialized)
+    {
+        std::cerr << "Network is already initialized." << std::endl;
+        return;
+    }
 
- /*   char serverIP[16];
-    std::cout << "server IP : ";
-    std::cin >> serverIP;*/
-   
+    if (!serverIP || WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
+        std::cerr << "Winsock initialization failed." << std::endl;
+        return;
+    }
 
     ConnectSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, nullptr, 0, WSA_FLAG_OVERLAPPED);
+    if (ConnectSocket == INVALID_SOCKET)
+    {
+        std::cerr << "Socket creation failed: " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        return;
+    }
 
     // 비동기 연결 설정
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
-    inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);  //serverIP.c_str()
- 
-
-    WSAOVERLAPPED connectOverlapped{};
-    connectOverlapped.hEvent = WSACreateEvent();
+    if (inet_pton(AF_INET, serverIP, &serverAddr.sin_addr) != 1)
+    {
+        std::cerr << "Invalid server IP address." << std::endl;
+        closesocket(ConnectSocket);
+        ConnectSocket = INVALID_SOCKET;
+        WSACleanup();
+        return;
+    }
 
 
     if (connect(ConnectSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
         std::cerr << "Connect Fail: " << WSAGetLastError() << std::endl;
         closesocket(ConnectSocket);
+        ConnectSocket = INVALID_SOCKET;
         WSACleanup();
-        exit(1);
+        return;
     }
 
-    WSACloseEvent(connectOverlapped.hEvent);
-
- 
-    std::cout << "Sever Connect" << std::endl;
-
-
-
-    //cs_packet_login p{};
-    //p.size = sizeof(p);
-    //p.type = CS_P_LOGIN;
-    //strcpy_s(p.name, sizeof(p.name), user_name.c_str());
-    ////p.job = gGameFramework.GetSelectedJob();
-    //send_packet(&p);
-
-    //std::cout << "[Client] Login Packet Send : Name=" << p.name << std::endl;
-
-    std::thread(RecvThread).detach();
-    std::thread(SendThread).detach();
+    g_running = true;
+    g_networkInitialized = true;
+    g_recvThread = std::thread(RecvThread);
+    g_sendThread = std::thread(SendThread);
+    std::cout << "Server connected" << std::endl;
 }
 
 void ProcessPacket(char* ptr)
@@ -455,7 +532,7 @@ void ProcessPacket(char* ptr)
     case SC_P_LEAVE: // 서버가 클라에게 다른 플레이어가 게임을 떠났음을 알려주는 패킷 타입
     {
         sc_packet_leave* packet = reinterpret_cast<sc_packet_leave*>(ptr);
-        int other_id = packet->id;
+        const long long other_id = packet->id;
 
         std::cout << "[Client] Player Remove: ID=" << other_id << std::endl;
 
@@ -611,7 +688,7 @@ void ProcessPacket(char* ptr)
         {
             if (packet->targetID == g_myid)
             {
-                scene->m_pPlayer->damage = packet->newDamage;
+                scene->m_pPlayer->damage = static_cast<float>(packet->newDamage);
                 scene->m_pPlayer->m_bIsAtkBuffed = (packet->newDamage > 10);
                 cout << "[BUFF_ATK] 내 공격력 갱신: " << packet->newDamage << "\n";
             }
@@ -671,7 +748,7 @@ void ProcessPacket(char* ptr)
         sc_packet_monster_spawn* packet = reinterpret_cast<sc_packet_monster_spawn*>(ptr);
         if (gGameFramework.isLoading || gGameFramework.isStartScene) {
             std::lock_guard<std::mutex> lock(g_pendingMonsterMutex);
-            g_pendingMonsterSpawns.push_back({ (int)packet->monsterID,packet->position,    packet->state });
+            g_pendingMonsterSpawns.push_back({ packet->monsterID, packet->position, packet->state });
             std::cout << "[몬스터] 로딩중 보관 ID=" << packet->monsterID << "\n";
             break;
         }
@@ -861,32 +938,6 @@ void ProcessPacket(char* ptr)
     }
 }
 
-// process_data() 함수 개선
-void process_data(char* net_buf, size_t io_byte) {
-
-    char* ptr = net_buf;
-    static size_t in_packet_size = 0;
-    static size_t saved_packet_size = 0;
-    static char packet_buffer[BUF_SIZE];
-
-    while (0 != io_byte) {
-        if (0 == in_packet_size) in_packet_size = ptr[0];
-        if (io_byte + saved_packet_size >= in_packet_size) {
-            memcpy(packet_buffer + saved_packet_size, ptr, in_packet_size - saved_packet_size);
-            ProcessPacket(packet_buffer);
-            ptr += in_packet_size - saved_packet_size;
-            io_byte -= in_packet_size - saved_packet_size;
-            in_packet_size = 0;
-            saved_packet_size = 0;
-        }
-        else {
-            memcpy(packet_buffer + saved_packet_size, ptr, io_byte);
-            saved_packet_size += io_byte;
-            io_byte = 0;
-        }
-    }
-}
-
 void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, const XMFLOAT3& right, const uint8_t& animState)
 {
 
@@ -901,11 +952,35 @@ void send_position_to_server(const XMFLOAT3& position, const XMFLOAT3& look, con
 
 }
 
-void CleanupNetwork() {
+void CleanupNetwork()
+{
+    std::lock_guard<std::mutex> networkLock(g_networkMutex);
+    if (!g_networkInitialized)
+        return;
+
     g_running = false;
-    closesocket(ConnectSocket);
+    g_sendCV.notify_all();
+
+    if (ConnectSocket != INVALID_SOCKET)
+    {
+        shutdown(ConnectSocket, SD_BOTH);
+        closesocket(ConnectSocket);
+    }
+
+    if (g_recvThread.joinable())
+        g_recvThread.join();
+    if (g_sendThread.joinable())
+        g_sendThread.join();
+
+    ConnectSocket = INVALID_SOCKET;
+    {
+        std::lock_guard<std::mutex> sendLock(g_sendMutex);
+        std::queue<std::vector<char>> emptyQueue;
+        g_sendQueue.swap(emptyQueue);
+    }
+
     WSACleanup();
-    g_sendCV.notify_all(); // 송신 스레드 깨우기
+    g_networkInitialized = false;
 }
 
 void LoadingDoneToServer()

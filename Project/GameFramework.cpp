@@ -905,7 +905,7 @@ void CGameFramework::UpdateItemRotation(long long itemID, const XMFLOAT3& look, 
 //	}
 //}
 
-void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int state)
+void CGameFramework::OnMonsterSpawned(long long monsterID, const XMFLOAT3& pos, int state)
 {
 	auto it = g_monsters.find(monsterID);
 	if (it != g_monsters.end())
@@ -934,7 +934,7 @@ void CGameFramework::OnMonsterSpawned(int monsterID, const XMFLOAT3& pos, int st
 		const MonsterDesc* pDesc = nullptr;
 		for (const auto& desc : MONSTER_DESCS)
 		{
-			int offset = monsterID - desc.startID;
+			const long long offset = monsterID - desc.startID;
 			if (offset >= 0 && offset < 3)   // 3마리 묶음
 			{
 				pDesc = &desc;
@@ -1008,7 +1008,7 @@ void CGameFramework::UpdateMonsterState(CMonster* pMonster, int state)
 	}
 }
 
-void CGameFramework::UpdateMonsterPosition(int monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state)
+void CGameFramework::UpdateMonsterPosition(long long monsterID, const XMFLOAT3& pos, const XMFLOAT3& rot, int state)
 {
 	auto it = g_monsters.find(monsterID);
 	if (it == g_monsters.end())
