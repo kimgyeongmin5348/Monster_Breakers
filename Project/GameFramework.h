@@ -85,6 +85,7 @@ public:
 	void UpdatePlayerHP(float hp) {
 		if (m_pPlayer->currentHP > hp) {
 			CSoundManager::GetInstance()->PlaySFX("player_hurt");
+			m_pCamera->StartShake(0.5f, 1.0f, 25.0f);
 		}
 		m_pPlayer->currentHP = hp;
 		m_pPlayer->maxHP += hp;
