@@ -149,6 +149,8 @@ public:
 		return m_ppScenes[m_nCurrentScene];
 	}
 
+	CCamera* GetCamera() { return m_pCamera; }
+
 	bool isLoading = false;
 	bool isStartScene = true;
 

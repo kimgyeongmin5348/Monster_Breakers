@@ -1723,6 +1723,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 						m_pGroundCrackEffect->Trigger(pos, look);
 
 					CSoundManager::GetInstance()->PlaySFX("knight_q");
+					gGameFramework.GetCamera()->StartShake(0.9f, 0.5f, 15.0f);
 
 					send_strike_packet(pos, look);
 				}
@@ -1769,6 +1770,7 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 				}
 				else if (m_pModel == m_pKnightModel) {
 					CSoundManager::GetInstance()->PlaySFX("knight_e");
+					gGameFramework.GetCamera()->StartShake(0.9f, 0.5f, 15.0f);
 
 					send_taunt_packet(pPlayer->level[2] * 5); //도발범위는 플레이어 레벨에 따라 증가
 					// 기사 도발	
