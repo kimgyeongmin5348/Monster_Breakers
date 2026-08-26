@@ -130,6 +130,10 @@ public:
 	void BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList);
 
+	// Party HP UI: shows other party members' (Knight/Thief) HP top-right, wizard-only
+	void CreatePartyHPUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	void UpdatePartyHPUI();
+
 protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
 	virtual void RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
@@ -145,6 +149,8 @@ protected:
 
 private:
 	std::vector<CTexture*> m_UITextures;
+
+	void UpdatePartyHPBar(CTextureToScreenShader* pBar, CText* pLabel, float& fPrevWidth, float fyTop, OtherPlayer* pTarget);
 
 public:
 	CPlayer								*m_pPlayer = NULL;
@@ -265,6 +271,22 @@ public:
 	CText* m_pMissionProgressText = nullptr;
 	CTextureToScreenShader* m_pMissionBgShader = nullptr; // 미션 배경 ui
 	bool        m_bMissionUIVisible = false;
+
+	// Party HP UI (other party members' HP shown top-right, wizard-only)
+	static constexpr float PARTY_HP_LEFT = 0.60f;
+	static constexpr float PARTY_HP_WIDTH = 0.35f;
+	static constexpr float PARTY_HP_HEIGHT = 0.08f;
+	static constexpr float PARTY_HP_GAP = 0.03f;
+	static constexpr float PARTY_HP_TOP = 0.0f; // top edge of the party HP block sits at vertical screen center
+
+	CTextureToScreenShader* m_pKnightPartyHPBarBg = nullptr; // black backdrop showing HP lost
+	CTextureToScreenShader* m_pThiefPartyHPBarBg = nullptr;
+	CTextureToScreenShader* m_pKnightPartyHPBar = nullptr;
+	CTextureToScreenShader* m_pThiefPartyHPBar = nullptr;
+	CText* m_pKnightPartyLabel = nullptr;
+	CText* m_pThiefPartyLabel = nullptr;
+	float m_fKnightPartyHPBarPrevWidth = -1.0f;
+	float m_fThiefPartyHPBarPrevWidth = -1.0f;
 
 	void ShowMissionText(const std::wstring& text);
 	void ShowMissionProgress(int currentCount, int targetCount);

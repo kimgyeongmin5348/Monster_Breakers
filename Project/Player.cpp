@@ -526,6 +526,15 @@ CTerrainPlayer::CTerrainPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	for (int i = 0; i < 3; ++i)
 		m_plevel[i] = new CText(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"LV.", 0.3f + i * 0.25f, -0.375f);
 
+	m_playerHPBg = new CScreenShader(1);
+	m_playerHPBg->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
+	CTexture* pHpBgTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+	pHpBgTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/black.dds", RESOURCE_TEXTURE2D, 0);
+	CScene::CreateShaderResourceViews(pd3dDevice, pHpBgTexture, 0, 15);
+	CScreenRectMeshTextured* pHpBgMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, 0.25f, 0.55f, 0.85f, 0.1f);
+	m_playerHPBg->SetMesh(0, pHpBgMesh);
+	m_playerHPBg->SetTexture(pHpBgTexture);
+
 	m_playerHP = new CScreenShader(1);
 	m_playerHP->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);

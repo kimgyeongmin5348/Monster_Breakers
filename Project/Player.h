@@ -204,6 +204,7 @@ public:
 	virtual void Update(float fTimeElapsed);
 
 
+	CTextureToScreenShader* m_playerHPBg = NULL; // black backdrop showing HP lost
 	CTextureToScreenShader* m_playerHP = NULL;
 	ID3D12Device* device = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;

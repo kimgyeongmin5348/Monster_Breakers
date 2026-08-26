@@ -293,6 +293,99 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 		m_pCooldownTexts[i] = pText;
 		m_GameObjects.push_back(pText);
 	}
+
+	CreatePartyHPUI(pd3dDevice, pd3dCommandList);
+}
+
+void CScene::CreatePartyHPUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	auto createBar = [&](const wchar_t* pTexturePath, float fyTop) -> CTextureToScreenShader*
+	{
+		CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
+		pTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, const_cast<wchar_t*>(pTexturePath), RESOURCE_TEXTURE2D, 0);
+		CScene::CreateShaderResourceViews(pd3dDevice, pTexture, 0, 15);
+
+		CTextureToScreenShader* pShader = new CScreenShader(1);
+		pShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+		CScreenRectMeshTextured* pMesh = new CScreenRectMeshTextured(pd3dDevice, pd3dCommandList, PARTY_HP_LEFT, PARTY_HP_WIDTH, fyTop, PARTY_HP_HEIGHT);
+		pShader->SetMesh(0, pMesh);
+		pShader->SetTexture(pTexture);
+		pShader->SetVisible(false); // hidden by default until a connected party member of that job is found
+
+		m_Shaders.push_back(pShader);
+		m_UITextures.push_back(pTexture);
+		return pShader;
+	};
+
+	auto createLabel = [&](const std::wstring& text, float fyTop) -> CText*
+	{
+		CText* pLabel = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, text, PARTY_HP_LEFT, fyTop + 0.09f);
+		pLabel->SetVisible(false);
+		m_GameObjects.push_back(pLabel);
+		return pLabel;
+	};
+
+	const float fKnightTop = PARTY_HP_TOP;
+	const float fThiefTop = PARTY_HP_TOP - (PARTY_HP_HEIGHT + PARTY_HP_GAP);
+
+	// Black backdrop is drawn first at full width so the drained portion of HP stays visible as black
+	// once the foreground bar (drawn right after, same rect) shrinks.
+	m_pKnightPartyHPBarBg = createBar(L"Image/black.dds", fKnightTop);
+	m_pKnightPartyHPBar = createBar(L"Image/hp.dds", fKnightTop);
+	m_pKnightPartyLabel = createLabel(L"Knight", fKnightTop);
+
+	m_pThiefPartyHPBarBg = createBar(L"Image/black.dds", fThiefTop);
+	m_pThiefPartyHPBar = createBar(L"Image/hp.dds", fThiefTop);
+	m_pThiefPartyLabel = createLabel(L"Thief", fThiefTop);
+}
+
+void CScene::UpdatePartyHPBar(CTextureToScreenShader* pBar, CText* pLabel, float& fPrevWidth, float fyTop, OtherPlayer* pTarget)
+{
+	if (!pBar) return;
+
+	bool bVisible = (pTarget != nullptr);
+	pBar->SetVisible(bVisible);
+	if (pLabel) pLabel->SetVisible(bVisible);
+	if (!bVisible) return;
+
+	float hpRatio = (pTarget->maxHP > 0.0f) ? (pTarget->currentHP / pTarget->maxHP) : 0.0f;
+	if (hpRatio < 0.0f) hpRatio = 0.0f;
+	if (hpRatio > 1.0f) hpRatio = 1.0f;
+
+	float newWidth = hpRatio * PARTY_HP_WIDTH;
+	if (fabs(fPrevWidth - newWidth) > 0.01f && pBar->m_nMeshes > 0 && pBar->m_ppMeshes[0])
+	{
+		fPrevWidth = newWidth;
+		auto* pRect = static_cast<CScreenRectMeshTextured*>(pBar->m_ppMeshes[0]);
+		pRect->UpdateRect(PARTY_HP_LEFT, newWidth, fyTop, PARTY_HP_HEIGHT);
+	}
+}
+
+void CScene::UpdatePartyHPUI()
+{
+	// Party HP UI is only shown to a local wizard player.
+	bool bIsWizard = (m_pModel != nullptr && m_pModel == m_pWizardModel);
+
+	OtherPlayer* pKnight = nullptr;
+	if (bIsWizard && m_ppOtherPlayers && m_nOtherPlayers >= 2)
+	{
+		if (m_ppOtherPlayers[0] && m_ppOtherPlayers[0]->isConnedted) pKnight = m_ppOtherPlayers[0];
+		else if (m_ppOtherPlayers[1] && m_ppOtherPlayers[1]->isConnedted) pKnight = m_ppOtherPlayers[1];
+	}
+
+	OtherPlayer* pThief = nullptr;
+	if (bIsWizard && m_ppOtherPlayers && m_nOtherPlayers >= 6)
+	{
+		if (m_ppOtherPlayers[4] && m_ppOtherPlayers[4]->isConnedted) pThief = m_ppOtherPlayers[4];
+		else if (m_ppOtherPlayers[5] && m_ppOtherPlayers[5]->isConnedted) pThief = m_ppOtherPlayers[5];
+	}
+
+	if (m_pKnightPartyHPBarBg) m_pKnightPartyHPBarBg->SetVisible(bIsWizard && pKnight != nullptr);
+	if (m_pThiefPartyHPBarBg) m_pThiefPartyHPBarBg->SetVisible(bIsWizard && pThief != nullptr);
+
+	UpdatePartyHPBar(m_pKnightPartyHPBar, m_pKnightPartyLabel, m_fKnightPartyHPBarPrevWidth, PARTY_HP_TOP, pKnight);
+	UpdatePartyHPBar(m_pThiefPartyHPBar, m_pThiefPartyLabel, m_fThiefPartyHPBarPrevWidth, PARTY_HP_TOP - (PARTY_HP_HEIGHT + PARTY_HP_GAP), pThief);
 }
 
 void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
@@ -305,7 +398,8 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 			for (int i = 0; i < SKILL_COUNT; ++i)
 				if (m_pCooldownTexts[i] == textObj) { bIsCooldownText = true; break; }
 
-			if (bIsCooldownText || textObj == m_pMissionText || textObj == m_pMissionProgressText)
+			if (bIsCooldownText || textObj == m_pMissionText || textObj == m_pMissionProgressText ||
+				textObj == m_pKnightPartyLabel || textObj == m_pThiefPartyLabel)
 				continue;
 
 			textObj->UpdateText(std::to_wstring(m_pPlayer->level[0]), L"LV. ");
@@ -1769,6 +1863,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Update(fTimeElapsed);
 
 	for (auto* shader : m_Shaders) if (shader) shader->AnimateObjects(fTimeElapsed);
+
+	UpdatePartyHPUI();
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -1840,8 +1936,11 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 		if (otherPlayer && otherPlayer->GetVisible()) otherPlayer->Render(pd3dCommandList, pCamera);
 
 	CTerrainPlayer* pTerrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
-	if (pTerrainPlayer && pTerrainPlayer->m_playerHP)
-		pTerrainPlayer->m_playerHP->Render(pd3dCommandList, pCamera);
+	if (pTerrainPlayer)
+	{
+		if (pTerrainPlayer->m_playerHPBg) pTerrainPlayer->m_playerHPBg->Render(pd3dCommandList, pCamera);
+		if (pTerrainPlayer->m_playerHP) pTerrainPlayer->m_playerHP->Render(pd3dCommandList, pCamera);
+	}
 
 	for (auto* shader : m_Shaders)
 	{
