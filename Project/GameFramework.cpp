@@ -867,7 +867,7 @@ void CGameFramework::FrameAdvance()
 		return;
 	}
 
-	m_GameTimer.Tick(60.0f);
+	m_GameTimer.Tick(0.0f);
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
