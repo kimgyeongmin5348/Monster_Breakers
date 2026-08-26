@@ -7,6 +7,7 @@
 #include "CDebugShader.h"
 #include "CCubeMesh.h"
 #include "DamageNumber.h"
+#include "CHitSparkSystem.h"
 
 class CGameObject;
 class CPlayer;
@@ -24,6 +25,7 @@ private:
 
     CFireballSystem* m_pFireballSystem = nullptr;
     CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
+    CHitSparkSystem* m_pHitSparkSystem = nullptr;
 
     int frameCounter = 0;
     bool m_bHitProcessed = false;     // 일반 몬스터용 (기존 로직, 건드리지 않음)
@@ -51,6 +53,7 @@ public:
     void SetBoss(CBossMonster* pBoss) { m_pBoss = pBoss; }
     void SetFireballSystem(CFireballSystem* p) { m_pFireballSystem = p; }
     void SetWeaponThrowSystem(CWeaponThrowSystem* p) { m_pWeaponThrowSystem = p; }
+    void SetHitSparkSystem(CHitSparkSystem* p) { m_pHitSparkSystem = p; }
 
     void Update(CPlayer* player);
 

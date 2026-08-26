@@ -19,9 +19,12 @@
 #include "Hpbar.h"
 #include "CFireballSystem.h"
 #include "CGreenSpiritSystem.h"
+#include "CHitSparkSystem.h"
+#include "CDeathBurstSystem.h"
 #include "CWeaponThrowSystem.h"
 #include "CBeamSystem.h"
 #include "GroundCrackEffect.h"
+#include "CSwordTrailEffect.h"
 
 #define MAX_LIGHTS						16 
 
@@ -133,6 +136,10 @@ public:
 	// Party HP UI: shows other party members' (Knight/Thief) HP top-right, wizard-only
 	void CreatePartyHPUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void UpdatePartyHPUI();
+
+	// Judging/debug overlay (top-left text, shown while m_bDebugMode is on - 'P' toggles it)
+	void CreateDebugOverlay(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	void UpdateDebugOverlay();
 
 protected:
 	// 실제 렌더 본문(공통). 자식들은 이걸 override하면 됨.
@@ -259,11 +266,20 @@ public:
 	CCollisionManager					m_CollisionManager;
 	bool								m_bDebugMode = false;
 
+	static constexpr int DEBUG_TEXT_LINES = 5;
+	CText* m_pDebugTexts[DEBUG_TEXT_LINES] = { nullptr };
+	int    m_nCurrentFps = 0;
+	int    m_nFpsFrameCount = 0;
+	float  m_fFpsAccumTime = 0.0f;
+
 	CFireballSystem* m_pFireballSystem = nullptr;
 	CGreenSpiritSystem* m_pGreenSpiritSystem = nullptr;
+	CHitSparkSystem* m_pHitSparkSystem = nullptr;
+	CDeathBurstSystem* m_pDeathBurstSystem = nullptr;
 	CWeaponThrowSystem* m_pWeaponThrowSystem = nullptr;
 	CBeamSystem* m_pBeamSystem = nullptr;
 	CGroundCrackEffect* m_pGroundCrackEffect = nullptr;
+	CSwordTrailEffect* m_pSwordTrailEffect = nullptr;
 
 	// npc ui
 	CText* m_pMissionText = nullptr;   // 미션 설명 텍스트

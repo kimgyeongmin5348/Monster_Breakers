@@ -6,6 +6,7 @@
 class CPlayer;
 class CGroundAttackRangeEffect;
 class CHeightMapTerrain;
+class CDeathBurstSystem;
 
 enum class BossState
 {
@@ -62,6 +63,9 @@ public:
     // 바닥 공격범위(텔레그래프) 이펙트 풀. 소유권은 Scene에 있고, 보스는 포인터만 받아서 Spawn()만 호출한다.
     void SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect) { m_pGroundAttackRangeEffect = pEffect; }
 
+    // 사망 시 터뜨릴 파티클 버스트. 소유권은 Scene에 있고, 보스는 포인터만 받아서 Emit()만 호출한다.
+    void SetDeathBurstSystem(CDeathBurstSystem* pSystem) { m_pDeathBurstSystem = pSystem; }
+
     CTextureToScreenShader* m_pBossHpbar = NULL;
 
     void SetMaxHP(float hp)
@@ -91,6 +95,7 @@ private:
     void ApplyVisualScale();
 
     CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;
+    CDeathBurstSystem* m_pDeathBurstSystem = nullptr;
 
     CPlayer* m_pPlayer = nullptr;
     CHeightMapTerrain* m_pTerrain = nullptr;

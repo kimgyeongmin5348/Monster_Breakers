@@ -1,11 +1,11 @@
-﻿#include "CGreenSpiritSystem.h"
+#include "CHitSparkSystem.h"
 #include "CFireballShader.h"
 #include "Scene.h"
 #include "d3dx12.h"
 #include <random>
 
 // -------------------------------------------------------
-CGreenSpiritSystem::CGreenSpiritSystem(
+CHitSparkSystem::CHitSparkSystem(
     ID3D12Device* pd3dDevice,
     ID3D12GraphicsCommandList* pd3dCommandList,
     ID3D12RootSignature* pd3dRootSignature)
@@ -13,13 +13,12 @@ CGreenSpiritSystem::CGreenSpiritSystem(
     CreateQuadMesh(pd3dDevice);
     CreateParticleBuffer(pd3dDevice);
 
-    // Fireball과 동일한 파이프라인 구조 사용, 셰이더 진입점만 다름
-    m_pShader = new CGreenSpiritShader();
+    // Same pipeline as Fireball, only the pixel shader entry point (tint/falloff) differs.
+    m_pShader = new CHitSparkShader();
     m_pShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dRootSignature);
     m_pShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-    // 불꽃 스프라이트시트를 그대로 재활용
-    // (PSGreenSpirit에서 초록 틴트를 적용하므로 별도 텍스처 불필요)
+    // Reuse the fire spritesheet; the shader tints it white/yellow instead of orange.
     m_pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
     m_pTexture->LoadTextureFromDDSFile(
         pd3dDevice, pd3dCommandList,
@@ -29,7 +28,7 @@ CGreenSpiritSystem::CGreenSpiritSystem(
 }
 
 // -------------------------------------------------------
-void CGreenSpiritSystem::CreateQuadMesh(ID3D12Device* pd3dDevice)
+void CHitSparkSystem::CreateQuadMesh(ID3D12Device* pd3dDevice)
 {
     CTexturedVertex quad[6] = {
         { XMFLOAT3(-0.5f,  0.5f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
@@ -61,11 +60,10 @@ void CGreenSpiritSystem::CreateQuadMesh(ID3D12Device* pd3dDevice)
 }
 
 // -------------------------------------------------------
-void CGreenSpiritSystem::CreateParticleBuffer(ID3D12Device* pd3dDevice)
+void CHitSparkSystem::CreateParticleBuffer(ID3D12Device* pd3dDevice)
 {
     UINT bufSize = sizeof(FireballParticleData) * MAX_PARTICLES;
 
-    // Upload 힙 (CPU → GPU 복사용, 영구 매핑)
     {
         CD3DX12_HEAP_PROPERTIES prop(D3D12_HEAP_TYPE_UPLOAD);
         CD3DX12_RESOURCE_DESC   desc = CD3DX12_RESOURCE_DESC::Buffer(bufSize);
@@ -76,7 +74,6 @@ void CGreenSpiritSystem::CreateParticleBuffer(ID3D12Device* pd3dDevice)
         m_pParticleUploadBuffer->Map(0, nullptr, (void**)&m_pMappedData);
     }
 
-    // Default 힙 (GPU SRV t4 로 읽힘)
     {
         CD3DX12_HEAP_PROPERTIES prop(D3D12_HEAP_TYPE_DEFAULT);
         CD3DX12_RESOURCE_DESC   desc = CD3DX12_RESOURCE_DESC::Buffer(
@@ -89,18 +86,16 @@ void CGreenSpiritSystem::CreateParticleBuffer(ID3D12Device* pd3dDevice)
 }
 
 // -------------------------------------------------------
-// Emit: 플레이어 발 위치(바닥)에서 위쪽으로 퍼져 오르는 파티클 방출
-void CGreenSpiritSystem::Emit(XMFLOAT3 position)
+// Emit: spray `count` particles outward from position in random directions.
+void CHitSparkSystem::Emit(XMFLOAT3 position, int count, float classTint)
 {
-    static std::mt19937 rng(99999);
-    std::uniform_real_distribution<float> spread(-1.2f, 1.2f);
-    std::uniform_real_distribution<float> upward(3.0f, 7.0f);  // 강한 상승력
-    std::uniform_real_distribution<float> life(1.0f, 1.8f);
-    std::uniform_real_distribution<float> sz(0.3f, 0.8f);
+    static std::mt19937 rng(777);
+    std::uniform_real_distribution<float> dir(-1.0f, 1.0f);
+    std::uniform_real_distribution<float> speed(3.0f, 7.0f);
+    std::uniform_real_distribution<float> life(0.18f, 0.32f);
+    std::uniform_real_distribution<float> sz(0.25f, 0.5f);
 
-    // Q를 누를 때 한꺼번에 여러 파티클 방출 (폭발적 등장감)
-    const int BURST = 12;
-    for (int b = 0; b < BURST; ++b)
+    for (int b = 0; b < count; ++b)
     {
         for (int i = 0; i < MAX_PARTICLES; ++i)
         {
@@ -109,15 +104,17 @@ void CGreenSpiritSystem::Emit(XMFLOAT3 position)
             {
                 auto& p = m_Particles[slot];
 
-                // 발 아래 → 위로 솟구치도록 Y 속도를 크게 설정
-                p.velocity = { spread(rng), upward(rng), spread(rng) };
-                p.position = position;               // 바닥 위치
+                XMVECTOR vDir = XMVectorSet(dir(rng), dir(rng) * 0.6f + 0.4f, dir(rng), 0.0f);
+                vDir = XMVector3Normalize(vDir);
+                XMStoreFloat3(&p.velocity, vDir * XMVectorReplicate(speed(rng)));
+
+                p.position = position;
                 p.size = sz(rng);
                 p.lifetime = 0.0f;
                 p.maxLifetime = life(rng);
                 p.uvOffset = 0.0f;
                 p.active = 1;
-                p.pad = 0.0f;
+                p.pad = classTint;
 
                 m_nNextSlot = (slot + 1) % MAX_PARTICLES;
                 m_bNeedUpload = true;
@@ -128,7 +125,7 @@ void CGreenSpiritSystem::Emit(XMFLOAT3 position)
 }
 
 // -------------------------------------------------------
-void CGreenSpiritSystem::Animate(float fTimeElapsed)
+void CHitSparkSystem::Animate(float fTimeElapsed)
 {
     for (auto& p : m_Particles)
     {
@@ -142,25 +139,15 @@ void CGreenSpiritSystem::Animate(float fTimeElapsed)
             continue;
         }
 
-        // 위치 이동
         p.position.x += p.velocity.x * fTimeElapsed;
         p.position.y += p.velocity.y * fTimeElapsed;
         p.position.z += p.velocity.z * fTimeElapsed;
 
-        float lifeRatio = p.lifetime / p.maxLifetime;
+        // Strong drag: sparks snap outward then stop almost immediately.
+        p.velocity.x *= (1.0f - 6.0f * fTimeElapsed);
+        p.velocity.y -= 4.0f * fTimeElapsed;
+        p.velocity.z *= (1.0f - 6.0f * fTimeElapsed);
 
-        // 상승하다가 수명 후반엔 서서히 감속 (중력은 약하게)
-        p.velocity.y -= 1.5f * fTimeElapsed;
-
-        // 수평 속도 감쇠 (유령처럼 흐릿하게 퍼짐)
-        p.velocity.x *= (1.0f - 0.8f * fTimeElapsed);
-        p.velocity.z *= (1.0f - 0.8f * fTimeElapsed);
-
-        // 수명에 따른 좌우 너울거림 (영혼 느낌)
-        float wave = sinf(p.lifetime * 5.0f + p.position.x * 2.0f) * 0.5f;
-        p.velocity.x += wave * fTimeElapsed;
-
-        // 스프라이트 시트 스크롤 (Fireball과 동일 속도)
         p.uvOffset = (p.lifetime * 8.0f / 16.0f);
 
         m_bNeedUpload = true;
@@ -168,7 +155,7 @@ void CGreenSpiritSystem::Animate(float fTimeElapsed)
 }
 
 // -------------------------------------------------------
-void CGreenSpiritSystem::UploadToGPU(ID3D12GraphicsCommandList* pd3dCommandList)
+void CHitSparkSystem::UploadToGPU(ID3D12GraphicsCommandList* pd3dCommandList)
 {
     if (!m_bNeedUpload) return;
     m_bNeedUpload = false;
@@ -194,8 +181,7 @@ void CGreenSpiritSystem::UploadToGPU(ID3D12GraphicsCommandList* pd3dCommandList)
 }
 
 // -------------------------------------------------------
-void CGreenSpiritSystem::Render(
-    ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+void CHitSparkSystem::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
     UploadToGPU(pd3dCommandList);
 
@@ -204,9 +190,7 @@ void CGreenSpiritSystem::Render(
     if (m_pTexture)
         m_pTexture->UpdateShaderVariable(pd3dCommandList, 0, 0);
 
-    // Fireball과 동일한 루트 파라미터 19번 (t4) 에 파티클 버퍼 바인딩
-    pd3dCommandList->SetGraphicsRootShaderResourceView(
-        19, m_pParticleDefaultBuffer->GetGPUVirtualAddress());
+    pd3dCommandList->SetGraphicsRootShaderResourceView(19, m_pParticleDefaultBuffer->GetGPUVirtualAddress());
 
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_QuadVBView);
     pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -214,7 +198,7 @@ void CGreenSpiritSystem::Render(
 }
 
 // -------------------------------------------------------
-int CGreenSpiritSystem::GetActiveCount() const
+int CHitSparkSystem::GetActiveCount() const
 {
     int count = 0;
     for (int i = 0; i < MAX_PARTICLES; ++i)
@@ -223,7 +207,7 @@ int CGreenSpiritSystem::GetActiveCount() const
 }
 
 // -------------------------------------------------------
-CGreenSpiritSystem::~CGreenSpiritSystem()
+CHitSparkSystem::~CHitSparkSystem()
 {
     if (m_pParticleUploadBuffer)
     {

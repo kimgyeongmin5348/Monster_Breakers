@@ -84,3 +84,13 @@ D3D12_SHADER_BYTECODE CGreenSpiritShader::CreatePixelShader()
 
     return CompileShaderFromFile(L"Shaders.hlsl", "PSGreenSpirit", "ps_5_1", &m_pd3dPixelShaderBlob);
 }
+
+D3D12_SHADER_BYTECODE CHitSparkShader::CreateVertexShader()
+{
+    return CompileShaderFromFile(L"Shaders.hlsl", "VSFireball", "vs_5_1", &m_pd3dVertexShaderBlob);
+}
+
+D3D12_SHADER_BYTECODE CHitSparkShader::CreatePixelShader()
+{
+    return CompileShaderFromFile(L"Shaders.hlsl", "PSHitSpark", "ps_5_1", &m_pd3dPixelShaderBlob);
+}

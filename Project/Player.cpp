@@ -924,6 +924,17 @@ bool CTerrainPlayer::IsAnimationFinished(int trackIndex)
 
 void CTerrainPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blendTime)
 {
+	if (!g_bAnimationBlendEnabled)
+	{
+		// Blending disabled: cut straight to the new track, no crossfade.
+		m_animBlend.active = false;
+		for (int i = 0; i < 7; ++i)
+			m_pSkinnedAnimationController->SetTrackEnable(i, i == toTrack);
+		m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f);
+		m_pSkinnedAnimationController->SetTrackPosition(fromTrack, 0.0f);
+		return;
+	}
+
 	// 진행 중인 블렌드가 있으면 현재 weight를 from의 시작값으로 사용
 	float startWeight = 1.0f;
 	if (m_animBlend.active && m_animBlend.to == fromTrack) {

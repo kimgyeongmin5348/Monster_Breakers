@@ -171,6 +171,9 @@
     <ClCompile Include="CFontMesh.cpp" />
     <ClCompile Include="CFontShader.cpp" />
     <ClCompile Include="CGreenSpiritSystem.cpp" />
+    <ClCompile Include="CHitSparkSystem.cpp" />
+    <ClCompile Include="CDeathBurstSystem.cpp" />
+    <ClCompile Include="CSwordTrailEffect.cpp" />
     <ClCompile Include="CMonster.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="CParticle.cpp" />
@@ -211,6 +214,9 @@
     <ClInclude Include="CFontMesh.h" />
     <ClInclude Include="CFontShader.h" />
     <ClInclude Include="CGreenSpiritSystem.h" />
+    <ClInclude Include="CHitSparkSystem.h" />
+    <ClInclude Include="CDeathBurstSystem.h" />
+    <ClInclude Include="CSwordTrailEffect.h" />
     <ClInclude Include="CMonster.h" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Common.h" />

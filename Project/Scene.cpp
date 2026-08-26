@@ -142,6 +142,7 @@ void CScene::InitializeCollisionSystem()
 
 	m_CollisionManager.SetFireballSystem(m_pFireballSystem);
 	m_CollisionManager.SetWeaponThrowSystem(m_pWeaponThrowSystem);
+	m_CollisionManager.SetHitSparkSystem(m_pHitSparkSystem);
 
 	for (auto* obj : m_Monsters) {
 		m_CollisionManager.SetMonsters(&m_Monsters);
@@ -295,6 +296,22 @@ void CScene::BuildSimpleUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
 	}
 
 	CreatePartyHPUI(pd3dDevice, pd3dCommandList);
+	CreateDebugOverlay(pd3dDevice, pd3dCommandList);
+}
+
+void CScene::CreateDebugOverlay(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	const float x = -0.95f;
+	const float topY = 0.65f;
+	const float lineGap = 0.09f;
+
+	for (int i = 0; i < DEBUG_TEXT_LINES; ++i)
+	{
+		CText* pText = new CText(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"", x, topY - lineGap * i);
+		pText->SetVisible(false);
+		m_pDebugTexts[i] = pText;
+		m_GameObjects.push_back(pText);
+	}
 }
 
 void CScene::CreatePartyHPUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -398,7 +415,11 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 			for (int i = 0; i < SKILL_COUNT; ++i)
 				if (m_pCooldownTexts[i] == textObj) { bIsCooldownText = true; break; }
 
-			if (bIsCooldownText || textObj == m_pMissionText || textObj == m_pMissionProgressText ||
+			bool bIsDebugText = false;
+			for (int i = 0; i < DEBUG_TEXT_LINES; ++i)
+				if (m_pDebugTexts[i] == textObj) { bIsDebugText = true; break; }
+
+			if (bIsCooldownText || bIsDebugText || textObj == m_pMissionText || textObj == m_pMissionProgressText ||
 				textObj == m_pKnightPartyLabel || textObj == m_pThiefPartyLabel)
 				continue;
 
@@ -426,6 +447,34 @@ void CScene::UpdateUI(ID3D12GraphicsCommandList* pd3dCommandList)
 			}
 		}
 	}
+
+	UpdateDebugOverlay();
+}
+
+void CScene::UpdateDebugOverlay()
+{
+	for (int i = 0; i < DEBUG_TEXT_LINES; ++i)
+		if (m_pDebugTexts[i]) m_pDebugTexts[i]->SetVisible(m_bDebugMode);
+
+	if (!m_bDebugMode) return;
+
+	int nFireball = m_pFireballSystem ? (int)m_pFireballSystem->GetActiveParticles().size() : 0;
+	int nHitSpark = m_pHitSparkSystem ? m_pHitSparkSystem->GetActiveCount() : 0;
+	int nGreenSpirit = m_pGreenSpiritSystem ? m_pGreenSpiritSystem->GetActiveCount() : 0;
+	int nDeathBurst = m_pDeathBurstSystem ? m_pDeathBurstSystem->GetActiveCount() : 0;
+	int nTotalParticles = nFireball + nHitSpark + nGreenSpirit + nDeathBurst;
+
+	int nConnected = 0;
+	for (auto* p : m_vPlayers)
+		if (p && p->isConnedted) ++nConnected;
+
+	std::wstring bossStatus = m_pBoss ? (m_pBoss->IsDead() ? L"Dead" : L"Alive") : L"None";
+
+	if (m_pDebugTexts[0]) m_pDebugTexts[0]->UpdateText(std::to_wstring(m_nCurrentFps), L"FPS: ");
+	if (m_pDebugTexts[1]) m_pDebugTexts[1]->UpdateText(std::to_wstring(nTotalParticles), L"Particles: ");
+	if (m_pDebugTexts[2]) m_pDebugTexts[2]->UpdateText(std::to_wstring((int)m_Monsters.size()) + L"  Boss: " + bossStatus, L"Monsters: ");
+	if (m_pDebugTexts[3]) m_pDebugTexts[3]->UpdateText(std::to_wstring(nConnected) + L"/" + std::to_wstring(m_nOtherPlayers), L"Players: ");
+	if (m_pDebugTexts[4]) m_pDebugTexts[4]->UpdateText(g_bAnimationBlendEnabled ? L"ON" : L"OFF (CapsLock)", L"Anim Blend: ");
 }
 
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -467,12 +516,18 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	m_pFireballSystem = new CFireballSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGreenSpiritSystem = new CGreenSpiritSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pHitSparkSystem = new CHitSparkSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pDeathBurstSystem = new CDeathBurstSystem(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	CMonster::SetDeathBurstSystem(m_pDeathBurstSystem);
 	m_pWeaponThrowSystem = new CWeaponThrowSystem();
 	m_pWeaponThrowSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pBeamSystem = new CBeamSystem();
 	m_pBeamSystem->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pGroundCrackEffect = new CGroundCrackEffect();
 	m_pGroundCrackEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+
+	m_pSwordTrailEffect = new CSwordTrailEffect();
+	m_pSwordTrailEffect->Create(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 
 	m_pKnightModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Knight.bin", NULL);
 	m_pWizardModel = CGameObject::LoadGeometryAndAnimationFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Wizard.bin", NULL);
@@ -507,6 +562,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	// 이펙트의 소유권(생성/Animate/Render/Release)은 Scene이 그대로 가지고,
 	// 보스는 포인터만 받아서 자신의 애니메이션 트랙(공격 패턴)에 따라 Spawn()만 호출한다.
 	m_pBoss->SetGroundAttackRangeEffect(m_pGroundAttackRangeEffect);
+	m_pBoss->SetDeathBurstSystem(m_pDeathBurstSystem);
 
 	// otherplayer 설정
 	m_nOtherPlayers = 6;
@@ -881,6 +937,8 @@ void CScene::ReleaseObjects()
 	if (m_pSkyBox) delete m_pSkyBox;
 	if (m_pFireballSystem) { delete m_pFireballSystem; m_pFireballSystem = nullptr; }
 	if (m_pGreenSpiritSystem) { delete m_pGreenSpiritSystem; m_pGreenSpiritSystem = nullptr; }
+	if (m_pHitSparkSystem) { delete m_pHitSparkSystem; m_pHitSparkSystem = nullptr; }
+	if (m_pDeathBurstSystem) { delete m_pDeathBurstSystem; m_pDeathBurstSystem = nullptr; }
 	if (m_pWeaponThrowSystem) { delete m_pWeaponThrowSystem; m_pWeaponThrowSystem = nullptr; }
 	if (m_pBeamSystem) { delete m_pBeamSystem; m_pBeamSystem = nullptr; }
 
@@ -1666,6 +1724,26 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 					send_strike_packet(pos, look);
 				}
+				// Thief Q: spinning slash - close-range AoE hit reusing the same generic
+				// strike protocol as the knight's ground crack, with its own visual/sound.
+				else if (m_pModel == m_pThiefModel)
+				{
+					XMFLOAT3 pos = pPlayer->GetPosition();
+					XMFLOAT3 look = pPlayer->GetLook();
+
+					if (m_pSwordTrailEffect)
+					{
+						// Full-circle glowing motion trail (procedural ribbon mesh, not particles) for the spin slash.
+						XMFLOAT3 sweepOrigin = pos;
+						sweepOrigin.y += 1.0f;
+						XMFLOAT3 right = pPlayer->GetRight();
+						m_pSwordTrailEffect->Trigger(sweepOrigin, look, right, 2.2f, 360.0f, 0.5f);
+					}
+
+					CSoundManager::GetInstance()->PlaySFX("rogue_q");
+
+					send_strike_packet(pos, look);
+				}
 
 				TriggerSkillCooldown(1);
 			}
@@ -1755,6 +1833,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		case 'P':
 			m_bDebugMode = !m_bDebugMode;
 			break;
+
+		case VK_CAPITAL:
+			g_bAnimationBlendEnabled = !g_bAnimationBlendEnabled;
+			break;
 		}
 		break;
 	}
@@ -1779,6 +1861,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 			if (m_pBoss->GetState() == BossState::Death) continue;
 			m_pBoss->SetHP(0.0f);
 			m_pBoss->SetHpbarVisible(false);
+			if (m_pDeathBurstSystem) m_pDeathBurstSystem->Emit(m_pBoss->GetPosition());
 			m_pBoss->TransitionTo(BossState::Death);
 			CSoundManager::GetInstance()->PlaySFX("boss_die_1");
 			CSoundManager::GetInstance()->PlayBGM("bgm_winner");
@@ -1858,13 +1941,25 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_pGroundAttackRangeEffect) m_pGroundAttackRangeEffect->Animate(fTimeElapsed);
 	if (m_pFireballSystem) m_pFireballSystem->Animate(fTimeElapsed);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Animate(fTimeElapsed);
+	if (m_pHitSparkSystem) m_pHitSparkSystem->Animate(fTimeElapsed);
+	if (m_pDeathBurstSystem) m_pDeathBurstSystem->Animate(fTimeElapsed);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Animate(fTimeElapsed);
 	if (m_pBeamSystem) m_pBeamSystem->Animate(fTimeElapsed);
 	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Update(fTimeElapsed);
+	if (m_pSwordTrailEffect) m_pSwordTrailEffect->Update(fTimeElapsed);
 
 	for (auto* shader : m_Shaders) if (shader) shader->AnimateObjects(fTimeElapsed);
 
 	UpdatePartyHPUI();
+
+	++m_nFpsFrameCount;
+	m_fFpsAccumTime += fTimeElapsed;
+	if (m_fFpsAccumTime >= 1.0f)
+	{
+		m_nCurrentFps = m_nFpsFrameCount;
+		m_nFpsFrameCount = 0;
+		m_fFpsAccumTime -= 1.0f;
+	}
 }
 
 void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
@@ -1954,9 +2049,12 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 
 	if (m_pFireballSystem) m_pFireballSystem->Render(pd3dCommandList, pCamera);
 	if (m_pGreenSpiritSystem) m_pGreenSpiritSystem->Render(pd3dCommandList, pCamera);
+	if (m_pHitSparkSystem) m_pHitSparkSystem->Render(pd3dCommandList, pCamera);
+	if (m_pDeathBurstSystem) m_pDeathBurstSystem->Render(pd3dCommandList, pCamera);
 	if (m_pWeaponThrowSystem) m_pWeaponThrowSystem->Render(pd3dCommandList, pCamera);
 	if (m_pBeamSystem) m_pBeamSystem->Render(pd3dCommandList, pCamera);
 	if (m_pGroundCrackEffect) m_pGroundCrackEffect->Render(pd3dCommandList, pCamera);
+	if (m_pSwordTrailEffect) m_pSwordTrailEffect->Render(pd3dCommandList, pCamera);
 }
 
 void CScene::RenderShadowPass(ID3D12GraphicsCommandList* pd3dCommandList)

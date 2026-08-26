@@ -120,6 +120,11 @@ struct AnimationBlend
 	bool active = false;
 };
 
+// Global toggle for animation blending (Caps Lock in-game). When false,
+// StartAnimationBlend() snaps directly to the target track instead of crossfading -
+// lets a demo show the before/after difference on demand.
+inline bool g_bAnimationBlendEnabled = true;
+
 struct sc_packet_user_info {
 	unsigned char	size;
 	char			type;
