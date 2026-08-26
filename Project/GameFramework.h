@@ -220,6 +220,9 @@ private:
 	bool m_bMouseOrbitDragging = false;
 	POINT m_ptOrbitLastPos;
 
+	bool m_bReloadInstancesRequested = false;
+	bool m_bUsingTestSetter = false;
+
 	_TCHAR						m_pszFrameRate[70];
 
 	//server

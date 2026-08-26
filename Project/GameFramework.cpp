@@ -401,6 +401,9 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 			case VK_F9:
 				ChangeSwapChainState();
 				break;
+			case 'M':
+				m_bReloadInstancesRequested = true;
+				break;
 			}
 			break;
 		default:
@@ -894,6 +897,19 @@ void CGameFramework::FrameAdvance()
 
 	if (!isStartScene && (m_nCurrentScene != 2 || m_isServerSpawnApplied)) ProcessInput();
 	AnimateObjects();
+
+	if (m_bReloadInstancesRequested)
+	{
+		WaitForGpuComplete();
+
+		m_bUsingTestSetter = !m_bUsingTestSetter;
+		const std::string setterPath = m_bUsingTestSetter
+			? "Model/Map/Setter/Map_objects_instances_setter_test.bin"
+			: "Model/Map/Setter/Map_objects_instances_setter.bin";
+
+		m_pScene->m_pMap->ReloadInstances(m_pd3dDevice, m_pd3dCommandList, setterPath);
+		m_bReloadInstancesRequested = false;
+	}
 
 	//WaitForGpuComplete();
 	if (m_pScene) m_pScene->UpdateUI(m_pd3dCommandList);
