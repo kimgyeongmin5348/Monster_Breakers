@@ -266,7 +266,7 @@ public:
 	CCollisionManager					m_CollisionManager;
 	bool								m_bDebugMode = false;
 
-	static constexpr int DEBUG_TEXT_LINES = 5;
+	static constexpr int DEBUG_TEXT_LINES = 7;
 	CText* m_pDebugTexts[DEBUG_TEXT_LINES] = { nullptr };
 	int    m_nCurrentFps = 0;
 	int    m_nFpsFrameCount = 0;

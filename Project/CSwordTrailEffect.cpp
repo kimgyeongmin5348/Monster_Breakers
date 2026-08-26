@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CSwordTrailEffect.h"
 #include "Camera.h"
+#include "Common.h"
 
 CSwordTrailEffect::~CSwordTrailEffect()
 {
@@ -296,4 +297,5 @@ void CSwordTrailEffect::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCame
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_VBView);
     pd3dCommandList->IASetIndexBuffer(&m_IBView);
     pd3dCommandList->DrawIndexedInstanced(MAX_INDICES, 1, 0, 0, 0);
+    ++g_nDrawCallCount;
 }

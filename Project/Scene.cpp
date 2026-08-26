@@ -458,11 +458,11 @@ void CScene::UpdateDebugOverlay()
 
 	if (!m_bDebugMode) return;
 
-	int nFireball = m_pFireballSystem ? (int)m_pFireballSystem->GetActiveParticles().size() : 0;
-	int nHitSpark = m_pHitSparkSystem ? m_pHitSparkSystem->GetActiveCount() : 0;
-	int nGreenSpirit = m_pGreenSpiritSystem ? m_pGreenSpiritSystem->GetActiveCount() : 0;
-	int nDeathBurst = m_pDeathBurstSystem ? m_pDeathBurstSystem->GetActiveCount() : 0;
-	int nTotalParticles = nFireball + nHitSpark + nGreenSpirit + nDeathBurst;
+	// Map objects are GPU-instanced (Map::Render groups them by mesh and issues one
+	// RenderInstanced call per group), so the object count vs. draw call count pair
+	// below is the direct before/after proof of that technique.
+	int nMapObjects = m_pMap ? (int)m_pMap->m_vObjectInstances.size() : 0;
+	int nQuadTreeNodes = m_CollisionManager.CountQuadTreeNodes();
 
 	int nConnected = 0;
 	for (auto* p : m_vPlayers)
@@ -471,10 +471,12 @@ void CScene::UpdateDebugOverlay()
 	std::wstring bossStatus = m_pBoss ? (m_pBoss->IsDead() ? L"Dead" : L"Alive") : L"None";
 
 	if (m_pDebugTexts[0]) m_pDebugTexts[0]->UpdateText(std::to_wstring(m_nCurrentFps), L"FPS: ");
-	if (m_pDebugTexts[1]) m_pDebugTexts[1]->UpdateText(std::to_wstring(nTotalParticles), L"Particles: ");
-	if (m_pDebugTexts[2]) m_pDebugTexts[2]->UpdateText(std::to_wstring((int)m_Monsters.size()) + L"  Boss: " + bossStatus, L"Monsters: ");
-	if (m_pDebugTexts[3]) m_pDebugTexts[3]->UpdateText(std::to_wstring(nConnected) + L"/" + std::to_wstring(m_nOtherPlayers), L"Players: ");
-	if (m_pDebugTexts[4]) m_pDebugTexts[4]->UpdateText(g_bAnimationBlendEnabled ? L"ON" : L"OFF (CapsLock)", L"Anim Blend: ");
+	if (m_pDebugTexts[1]) m_pDebugTexts[1]->UpdateText(std::to_wstring(nMapObjects), L"Map Objects: ");
+	if (m_pDebugTexts[2]) m_pDebugTexts[2]->UpdateText(std::to_wstring(g_nDrawCallCount), L"Draw Calls: ");
+	if (m_pDebugTexts[3]) m_pDebugTexts[3]->UpdateText(std::to_wstring(nQuadTreeNodes), L"QuadTree Nodes: ");
+	if (m_pDebugTexts[4]) m_pDebugTexts[4]->UpdateText(std::to_wstring((int)m_Monsters.size()) + L"  Boss: " + bossStatus, L"Monsters: ");
+	if (m_pDebugTexts[5]) m_pDebugTexts[5]->UpdateText(std::to_wstring(nConnected) + L"/" + std::to_wstring(m_nOtherPlayers), L"Players: ");
+	if (m_pDebugTexts[6]) m_pDebugTexts[6]->UpdateText(g_bAnimationBlendEnabled ? L"ON" : L"OFF (CapsLock)", L"Anim Blend: ");
 }
 
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
@@ -1986,6 +1988,8 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 
 void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+	g_nDrawCallCount = 0;
+
 	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
 	if (m_pd3dCbvSrvDescriptorHeap)  pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dCbvSrvDescriptorHeap);
 

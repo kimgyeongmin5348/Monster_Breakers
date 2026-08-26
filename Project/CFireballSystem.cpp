@@ -219,6 +219,7 @@ void CFireballSystem::Render(
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_QuadVBView);
     pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pd3dCommandList->DrawInstanced(6, MAX_PARTICLES, 0, 0);
+    ++g_nDrawCallCount;
 }
 
 // -------------------------------------------------------

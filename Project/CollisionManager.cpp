@@ -53,6 +53,20 @@ void CCollisionManager::PrintTree()
     m_pQuadTree->PrintTree();
 }
 
+static int CountQuadTreeNodesRecursive(QuadTreeNode* node)
+{
+    if (!node) return 0;
+    int count = 1;
+    for (int i = 0; i < 4; ++i)
+        count += CountQuadTreeNodesRecursive(node->children[i]);
+    return count;
+}
+
+int CCollisionManager::CountQuadTreeNodes() const
+{
+    return CountQuadTreeNodesRecursive(m_pQuadTree ? m_pQuadTree->root : nullptr);
+}
+
 bool CCollisionManager::CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col)
 {
     switch (col.type)

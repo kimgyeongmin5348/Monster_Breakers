@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "GroundCrackEffect.h"
 #include "Camera.h"
+#include "Common.h"
 
 CGroundCrackEffect::~CGroundCrackEffect()
 {
@@ -323,4 +324,5 @@ void CGroundCrackEffect::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCam
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_VBView);
     pd3dCommandList->IASetIndexBuffer(&m_IBView);
     pd3dCommandList->DrawIndexedInstanced(MAX_INDICES, 1, 0, 0, 0);
+    ++g_nDrawCallCount;
 }

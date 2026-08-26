@@ -46,6 +46,7 @@ public:
     void InsertCollider(const ColliderInfo& collider);
 
     void PrintTree();
+    int CountQuadTreeNodes() const;
 
     bool CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col);
 
