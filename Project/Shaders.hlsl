@@ -527,6 +527,7 @@ struct VS_FIREBALL_OUT
     float4 posH : SV_POSITION;
     float2 uv : TEXCOORD0;
     float lifeRatio : TEXCOORD1;
+    float classTint : TEXCOORD2;
 };
 
 VS_FIREBALL_OUT VSFireball(VS_FIREBALL_IN input, uint instanceID : SV_InstanceID)
@@ -540,6 +541,7 @@ VS_FIREBALL_OUT VSFireball(VS_FIREBALL_IN input, uint instanceID : SV_InstanceID
         output.posH = float4(0.0f, 0.0f, 2.0f, 1.0f);
         output.uv = float2(0.0f, 0.0f);
         output.lifeRatio = 0.0f;
+        output.classTint = 0.0f;
         return output;
     }
 
@@ -569,6 +571,7 @@ VS_FIREBALL_OUT VSFireball(VS_FIREBALL_IN input, uint instanceID : SV_InstanceID
 
     output.uv = spriteUV;
     output.lifeRatio = saturate(p.lifetime / p.maxLifetime);
+    output.classTint = p.pad;
 
     return output;
 }
@@ -625,6 +628,52 @@ float4 PSGreenSpirit(VS_FIREBALL_OUT input) : SV_TARGET
     return texColor;
 }
 
+float4 PSHitSpark(VS_FIREBALL_OUT input) : SV_TARGET
+{
+    float4 texColor = gtxtTexture.Sample(gssWrap, input.uv);
+    float life = input.lifeRatio;
+
+    float2 cellUV = frac(input.uv * float2(SPRITE_COLS, SPRITE_ROWS));
+    float2 c2 = cellUV - float2(0.5f, 0.5f);
+    float edgeFade = 1.0f - smoothstep(0.3f, 0.5f, length(c2));
+
+    // Sparks are short-lived, so fade hard and early instead of Fireball's slow burn-out.
+    float lifeFade = 1.0f - smoothstep(0.2f, 1.0f, life);
+    texColor.a *= edgeFade * lifeFade;
+
+    clip(texColor.a - 0.01f);
+
+    // Bright core cooling toward a per-class color - classTint is set from the
+    // attacking player's class (1=Knight/blue, 2=Thief/gray, 3=Wizard/purple).
+    // 0 (or anything else) falls back to the original white/amber impact flash.
+    float3 cYoung, cOld;
+    if (input.classTint > 2.5f)        // Wizard - purple
+    {
+        cYoung = float3(1.7f, 1.3f, 2.3f);
+        cOld = float3(0.55f, 0.15f, 0.75f);
+    }
+    else if (input.classTint > 1.5f)   // Thief - gray
+    {
+        cYoung = float3(1.9f, 1.9f, 2.0f);
+        cOld = float3(0.5f, 0.5f, 0.55f);
+    }
+    else if (input.classTint > 0.5f)   // Knight - blue
+    {
+        cYoung = float3(1.2f, 1.7f, 2.4f);
+        cOld = float3(0.1f, 0.35f, 0.95f);
+    }
+    else                                // fallback - white-hot to amber
+    {
+        cYoung = float3(2.2f, 2.0f, 1.6f);
+        cOld = float3(1.0f, 0.55f, 0.15f);
+    }
+
+    float3 sparkColor = lerp(cYoung, cOld, saturate(life * 1.6f));
+    texColor.rgb *= sparkColor;
+
+    return texColor;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct VS_GROUNDCRACK_INPUT
@@ -671,6 +720,53 @@ float4 PSGroundCrack(VS_GROUNDCRACK_OUTPUT input) : SV_TARGET
     clip(alpha - 0.005f);
 
     return float4(crackColor, alpha);
+}
+
+// ===== Sword Trail (procedural ribbon arc, world-space) =====
+// Reuses the ground-crack input layout (POSITION/TEXCOORD/COLOR-as-alpha) but is
+// a standalone effect: a glowing motion-trail ribbon for a sword sweep, built as
+// CPU-side geometry (CSwordTrailEffect) rather than a particle system.
+struct VS_SWORDTRAIL_INPUT
+{
+    float3 position : POSITION;
+    float2 uv : TEXCOORD;
+    float alpha : COLOR;
+};
+
+struct VS_SWORDTRAIL_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float2 uv : TEXCOORD;
+    float alpha : COLOR;
+};
+
+VS_SWORDTRAIL_OUTPUT VSSwordTrail(VS_SWORDTRAIL_INPUT input)
+{
+    VS_SWORDTRAIL_OUTPUT output;
+
+    float4 posW = float4(input.position, 1.0f);
+    output.position = mul(mul(posW, gmtxView), gmtxProjection);
+    output.uv = input.uv;
+    output.alpha = input.alpha;
+
+    return output;
+}
+
+float4 PSSwordTrail(VS_SWORDTRAIL_OUTPUT input) : SV_TARGET
+{
+    // Bright core along the middle of the ribbon's width, fading toward both edges.
+    float centerFactor = 1.0f - abs(input.uv.y * 2.0f - 1.0f);
+    centerFactor = pow(abs(centerFactor), 0.5f);
+
+    float alpha = centerFactor * input.alpha;
+    clip(alpha - 0.005f);
+
+    // White-hot core cooling to a cool silver-gray edge - a blade-light streak.
+    float3 coreColor = float3(2.4f, 2.4f, 2.6f);
+    float3 edgeColor = float3(0.45f, 0.48f, 0.55f);
+    float3 trailColor = lerp(edgeColor, coreColor, centerFactor);
+
+    return float4(trailColor, alpha);
 }
 
 // ===== HP Bar (3D billboard, world-space) =====

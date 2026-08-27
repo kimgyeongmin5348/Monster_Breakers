@@ -53,9 +53,9 @@ public:
 	virtual void ReleaseShaderVariables();
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
 
-	void GenerateViewMatrix();
+	virtual void GenerateViewMatrix();
 	void GenerateViewMatrix(XMFLOAT3 xmf3Position, XMFLOAT3 xmf3LookAt, XMFLOAT3 xmf3Up);
-	void RegenerateViewMatrix();
+	virtual void RegenerateViewMatrix();
 
 	void GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlaneDistance, float fAspectRatio, float fFOVAngle);
 
@@ -102,6 +102,8 @@ public:
 	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f) {}
 	virtual void Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed) {}
 	virtual void SetLookAt(XMFLOAT3& xmf3LookAt) {}
+
+	virtual void StartShake(float duration, float magnitude, float frequency) {};
 };
 
 class CSpaceShipCamera : public CCamera
@@ -138,9 +140,26 @@ public:
 	float GetOrbitYaw() const { return(m_fOrbitYaw); }
 	float GetOrbitPitch() const { return(m_fOrbitPitch); }
 
+	virtual void StartShake(float duration, float magnitude, float frequency = 20.0f) override;
+	void UpdateShake(float fTimeElapsed);
+
+	virtual void RegenerateViewMatrix() override;
+
 private:
 	float m_fOrbitYaw = 0.0f;     // 플레이어 기준 카메라 수평 궤도각(도), 월드 고정 기준
 	float m_fOrbitPitch = 15.0f;  // 플레이어 기준 카메라 수직 궤도각(도)
 	static constexpr float ORBIT_PITCH_MIN = -20.0f;
 	static constexpr float ORBIT_PITCH_MAX = 80.0f;
+
+	float m_fShakeTime = 0.0f;
+	float m_fShakeDuration = 0.0f;
+	float m_fShakeMagnitude = 0.0f;
+	float m_fShakeFrequency = 20.0f;
+
+	XMFLOAT3 m_xmf3ShakeOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 m_xmf3ShakeRotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	XMFLOAT3 m_xmf3ShakePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	XMFLOAT3 m_xmf3RenderPosition; // 흔들림이 반영된, GenerateViewMatrix에만 쓰는 최종 위치
 };

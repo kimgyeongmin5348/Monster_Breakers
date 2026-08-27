@@ -281,10 +281,34 @@ void CThirdPersonCamera::Update(XMFLOAT3& xmf3LookAt, float fTimeElapsed)
 		if (fDistance > 0)
 		{
 			m_xmf3Position = Vector3::Add(m_xmf3Position, xmf3Direction, fDistance);
-			XMFLOAT3 xmf3AdjustedLookAt = xmf3LookAt;
-			xmf3AdjustedLookAt.y += 1.5f; // �÷��̾��� �Ӹ� ���� (y + 2)
-			SetLookAt(xmf3AdjustedLookAt);
 		}
+
+		UpdateShake(fTimeElapsed);
+
+		XMFLOAT3 xmf3AdjustedLookAt = xmf3LookAt;
+		xmf3AdjustedLookAt.y += 1.5f;
+		SetLookAt(xmf3AdjustedLookAt);
+	
+		//GenerateViewMatrix();
+
+
+
+		//UpdateShake(fTimeElapsed);
+
+		//XMFLOAT3 xmf3AdjustedLookAt = xmf3LookAt;
+		//xmf3AdjustedLookAt.y += 1.5f;
+
+		//// 흔들림 회전을 look-at 지점에도 살짝 반영하고 싶다면
+		//// (간단히는 lookAt 자체에 회전 오프셋을 더하는 방식)
+		////xmf3AdjustedLookAt.x += m_xmf3ShakeRotation.y * someScale; // yaw 흔들림 → 좌우
+		////xmf3AdjustedLookAt.y += m_xmf3ShakeRotation.x * someScale; // pitch 흔들림 → 상하
+
+		//SetLookAt(xmf3AdjustedLookAt);
+
+		//// 최종 렌더용 위치 = 순수 위치 + 흔들림 오프셋
+		//m_xmf3RenderPosition = Vector3::Add(m_xmf3Position, m_xmf3ShakeOffset);
+
+		//GenerateViewMatrix(); // 이 함수가 m_xmf3Position 대신 m_xmf3RenderPosition을 쓰도록 수정 필요
 	}
 }
 
@@ -336,4 +360,113 @@ void CThirdPersonCamera::AddOrbitRotation(float deltaYaw, float deltaPitch)
 	m_fOrbitPitch += deltaPitch;
 	if (m_fOrbitPitch > ORBIT_PITCH_MAX) m_fOrbitPitch = ORBIT_PITCH_MAX;
 	if (m_fOrbitPitch < ORBIT_PITCH_MIN) m_fOrbitPitch = ORBIT_PITCH_MIN;
+}
+
+void CThirdPersonCamera::StartShake(float duration, float magnitude, float frequency)
+{
+	m_fShakeTime = 0.0f;
+	m_fShakeDuration = duration;
+	m_fShakeMagnitude = magnitude;
+	m_fShakeFrequency = frequency;
+
+	m_xmf3ShakeOffset = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_xmf3ShakeRotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+}
+
+void CThirdPersonCamera::UpdateShake(float fTimeElapsed)
+{
+	if (m_fShakeTime >= m_fShakeDuration)
+	{
+		m_xmf3ShakeOffset = XMFLOAT3(0, 0, 0);
+		m_xmf3ShakeRotation = XMFLOAT3(0, 0, 0);
+		return;
+	}
+
+	m_fShakeTime += fTimeElapsed;
+
+	float t = m_fShakeTime / m_fShakeDuration;
+	t = std::min(t, 1.0f);
+
+	float falloff = 1.0f - t;
+	falloff *= falloff;
+
+	float time = m_fShakeTime * m_fShakeFrequency;
+
+	float x = sinf(time);
+	float y = sinf(time * 1.37f + 1.7f);
+	float z = sinf(time * 0.83f + 3.2f);
+
+	m_xmf3ShakeOffset.x = x * m_fShakeMagnitude * falloff;
+	m_xmf3ShakeOffset.y = y * m_fShakeMagnitude * falloff;
+	m_xmf3ShakeOffset.z = z * m_fShakeMagnitude * falloff;
+
+	m_xmf3ShakeRotation.x = y * m_fShakeMagnitude * 2.0f * falloff;
+	m_xmf3ShakeRotation.y = z * m_fShakeMagnitude * 1.5f * falloff;
+	m_xmf3ShakeRotation.z = x * m_fShakeMagnitude * 2.5f * falloff;
+}
+
+void CThirdPersonCamera::RegenerateViewMatrix()
+{
+	XMVECTOR right = XMLoadFloat3(&m_xmf3Right);
+	XMVECTOR up = XMLoadFloat3(&m_xmf3Up);
+	XMVECTOR look = XMLoadFloat3(&m_xmf3Look);
+
+	XMVECTOR position = XMLoadFloat3(&m_xmf3Position);
+
+	// =====================================================
+	// Camera Shake Rotation
+	// =====================================================
+
+	XMMATRIX shakeRotation =
+		XMMatrixRotationRollPitchYaw(
+			XMConvertToRadians(m_xmf3ShakeRotation.x),
+			XMConvertToRadians(m_xmf3ShakeRotation.y),
+			XMConvertToRadians(m_xmf3ShakeRotation.z)
+		);
+
+	right = XMVector3TransformNormal(right,shakeRotation);
+
+	up = XMVector3TransformNormal(up,shakeRotation);
+
+	look = XMVector3TransformNormal(look,shakeRotation);
+
+	// =====================================================
+	// Camera Shake Position
+	// =====================================================
+
+	position +=	right * m_xmf3ShakeOffset.x;
+
+	position +=	up * m_xmf3ShakeOffset.y;
+
+	position +=	look * m_xmf3ShakeOffset.z;
+
+	// =====================================================
+	// Normalize
+	// =====================================================
+
+	right = XMVector3Normalize(right);
+	up = XMVector3Normalize(up);
+	look = XMVector3Normalize(look);
+
+	// =====================================================
+	// 기존 RegenerateViewMatrix()와 동일한 방식
+	// =====================================================
+
+	m_xmf4x4View._11 = XMVectorGetX(right);
+	m_xmf4x4View._12 = XMVectorGetX(up);
+	m_xmf4x4View._13 = XMVectorGetX(look);
+
+	m_xmf4x4View._21 = XMVectorGetY(right);
+	m_xmf4x4View._22 = XMVectorGetY(up);
+	m_xmf4x4View._23 = XMVectorGetY(look);
+
+	m_xmf4x4View._31 = XMVectorGetZ(right);
+	m_xmf4x4View._32 = XMVectorGetZ(up);
+	m_xmf4x4View._33 = XMVectorGetZ(look);
+
+	m_xmf4x4View._41 = -XMVectorGetX(XMVector3Dot(position, right));
+	m_xmf4x4View._42 = -XMVectorGetX(XMVector3Dot(position, up));
+	m_xmf4x4View._43 = -XMVectorGetX(XMVector3Dot(position, look));
+
+	m_xmf4x4View._44 = 1.0f;
 }

@@ -3,6 +3,7 @@
 #include "Player.h"
 #include "Network.h"   // g_monsters / send_hit_damage
 #include "SoundManager.h"
+#include "CDeathBurstSystem.h"
 
 namespace
 {
@@ -263,6 +264,7 @@ void CBossMonster::TakeDamage(float damage)
     if (m_fMonsterHP <= 0.0f)
     {
         CSoundManager::GetInstance()->PlaySFX("boss_die_1");
+        if (m_pDeathBurstSystem) m_pDeathBurstSystem->Emit(GetPosition());
         TransitionTo(BossState::Death);
     }
     else

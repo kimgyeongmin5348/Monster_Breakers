@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CBeamSystem.h"
 #include "d3dx12.h"
+#include "Common.h"
 
 class CBeamShader : public CShader
 {
@@ -234,4 +235,5 @@ void CBeamSystem::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
     pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pd3dCommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
     pd3dCommandList->DrawInstanced(6, 1, 0, 0);
+    ++g_nDrawCallCount;
 }

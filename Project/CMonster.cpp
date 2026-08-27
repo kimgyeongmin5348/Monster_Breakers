@@ -3,6 +3,9 @@
 #include "Player.h"
 #include "Network.h"   // g_monsters
 #include "SoundManager.h"
+#include "CDeathBurstSystem.h"
+
+CDeathBurstSystem* CMonster::s_pDeathBurstSystem = nullptr;
 
 CMonster::CMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
     const char* pstrModelPath, int nAnimationTracks, CLoadedModelInfo* pModel, float fMaxHP, int id)
@@ -76,6 +79,7 @@ void CMonster::TakeDamage(float damage)
         int randomIndex = (rand() % 2) + 1;
         string sfxName = "monster_die_" + to_string(randomIndex);
         CSoundManager::GetInstance()->PlaySFX(sfxName);
+        if (s_pDeathBurstSystem) s_pDeathBurstSystem->Emit(GetPosition());
         TransitionTo(MonsterState::Death);
     }
     else

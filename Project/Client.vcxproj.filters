@@ -142,6 +142,15 @@
     <ClCompile Include="CGreenSpiritSystem.cpp">
       <Filter>소스 파일\Object\Effect</Filter>
     </ClCompile>
+    <ClCompile Include="CHitSparkSystem.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="CDeathBurstSystem.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="CSwordTrailEffect.cpp">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClCompile>
     <ClCompile Include="CWeaponThrowSystem.cpp">
       <Filter>소스 파일\Object\Effect</Filter>
     </ClCompile>
@@ -265,6 +274,15 @@
       <Filter>소스 파일\Object\Effect</Filter>
     </ClInclude>
     <ClInclude Include="CGreenSpiritSystem.h">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="CHitSparkSystem.h">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="CDeathBurstSystem.h">
+      <Filter>소스 파일\Object\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="CSwordTrailEffect.h">
       <Filter>소스 파일\Object\Effect</Filter>
     </ClInclude>
     <ClInclude Include="GroundCrackEffect.h">

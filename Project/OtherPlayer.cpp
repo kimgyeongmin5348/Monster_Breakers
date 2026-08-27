@@ -137,6 +137,17 @@ bool OtherPlayer::IsAnimationFinished(int trackIndex)
 
 void OtherPlayer::StartAnimationBlend(int fromTrack, int toTrack, float blendTime)
 {
+	if (!g_bAnimationBlendEnabled)
+	{
+		// Blending disabled: cut straight to the new track, no crossfade.
+		m_animBlend.active = false;
+		for (int i = 0; i < 7; ++i)
+			m_pSkinnedAnimationController->SetTrackEnable(i, i == toTrack);
+		m_pSkinnedAnimationController->SetTrackWeight(toTrack, 1.0f);
+		m_pSkinnedAnimationController->SetTrackPosition(fromTrack, 0.0f);
+		return;
+	}
+
 	m_animBlend.from = fromTrack;
 	m_animBlend.to = toTrack;
 	m_animBlend.duration = blendTime;

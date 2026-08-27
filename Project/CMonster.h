@@ -3,6 +3,7 @@
 #include "Hpbar.h"
 
 class CPlayer;
+class CDeathBurstSystem;
 
 enum class MonsterState
 {
@@ -36,6 +37,10 @@ public:
     void SetPlayer(CPlayer* p) { m_pPlayer = p; }
     void SetMonsterID(int id) { m_nMonsterID = id; }
     int  GetMonsterID() const { return m_nMonsterID; }
+
+    // Owned by Scene, shared by every CMonster instance (monsters are spawned
+    // dynamically from multiple places, so a per-instance setter isn't practical).
+    static void SetDeathBurstSystem(CDeathBurstSystem* p) { s_pDeathBurstSystem = p; }
 
     // Scene에서 한 줄로 특정 몬스터 종류를 N마리 생성
     // startID부터 순서대로 ID 할당, g_monsters에도 등록
@@ -79,4 +84,5 @@ private:
 
     MonsterState m_eState = MonsterState::Idle;
 
+    static CDeathBurstSystem* s_pDeathBurstSystem;
 };

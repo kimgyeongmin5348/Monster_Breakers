@@ -50,7 +50,8 @@ public:
     void ReleaseUploadBuffers() override;
 
 	void LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-	void LoadGeometryFromFile();
+	void LoadGeometryFromFile(const std::string& filePath);
+    void ReloadInstances(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const std::string& setterFilePath);
 	void SetInstanceData();
 
     string ReadString(ifstream& inFile);
@@ -62,6 +63,8 @@ public:
 
 	void BuildWorldBoundingBoxes();
 	//float GetHeight(float x, float z) const;
+
+    void ReleaseInstanceBuffers(); // 인스턴스 버퍼만 따로 해제하는 헬퍼
 
 public:
     CInstancedStandardShader* m_pInstancedShader = NULL;
