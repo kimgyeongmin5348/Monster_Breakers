@@ -1,4 +1,4 @@
-ï»¿#include "stdafx.h"
+#include "stdafx.h"
 #include "CBossMonster.h"
 #include "Player.h"
 #include "Network.h"   // g_monsters / send_hit_damage
@@ -15,8 +15,8 @@ namespace
     constexpr int TRACK_DEATH = 5;
     constexpr int BOSS_ANIMATION_TRACKS = 6;
 
-    // ë³´ìŠ¤ hpbar í™”ë©´ ìœ„ì¹˜/í¬ê¸° (í™”ë©´ ìƒë‹¨ ìš°ì¸¡, í”Œë ˆì´ì–´ hpbar ë°”ë¡œ ìœ„).
-    // ì¢Œí‘œê³„ëŠ” í”Œë ˆì´ì–´ hpbarì™€ ë™ì¼: leftëŠ” ì‹œìž‘ x, ê±°ê¸°ì„œ MAX_WIDTHë§Œí¼ ìš°ì¸¡ìœ¼ë¡œ ë»—ëŠ”ë‹¤.
+    // º¸½º hpbar È­¸é À§Ä¡/Å©±â (È­¸é »ó´Ü ¿ìÃø, ÇÃ·¹ÀÌ¾î hpbar ¹Ù·Î À§).
+    // ÁÂÇ¥°è´Â ÇÃ·¹ÀÌ¾î hpbar¿Í µ¿ÀÏ: left´Â ½ÃÀÛ x, °Å±â¼­ MAX_WIDTH¸¸Å­ ¿ìÃøÀ¸·Î »¸´Â´Ù.
     constexpr float BOSS_HPBAR_LEFT = -0.5f;
     constexpr float BOSS_HPBAR_MAX_WIDTH = 1.0f;
     constexpr float BOSS_HPBAR_TOP = 0.7f;
@@ -46,12 +46,12 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
     m_pSkinnedAnimationController->SetTrackType(TRACK_TAUNT, ANIMATION_TYPE_ONCE);
     m_pSkinnedAnimationController->SetTrackType(TRACK_DEATH, ANIMATION_TYPE_ONCE);
 
-    // Idleë§Œ í™œì„±í™”
+    // Idle¸¸ È°¼ºÈ­
     for (int i = 1; i < BOSS_ANIMATION_TRACKS; ++i)
         m_pSkinnedAnimationController->SetTrackEnable(i, false);
 
-    // í”Œë ˆì´ì–´ hpbar(SetHPWidth)ì™€ ë™ì¼í•œ (left, width, top, height) ì‹œê·¸ë‹ˆì²˜ë¥¼ ì‚¬ìš©.
-    // ì‚¬ì§„ ê¸°ì¤€ í™”ë©´ ìƒë‹¨ ìš°ì¸¡ì— ë°°ì¹˜: í”Œë ˆì´ì–´ hpbar(top=0.85f)ë³´ë‹¤ ìœ„ìª½, ì•½ê°„ ë” í° í­.
+    // ÇÃ·¹ÀÌ¾î hpbar(SetHPWidth)¿Í µ¿ÀÏÇÑ (left, width, top, height) ½Ã±×´ÏÃ³¸¦ »ç¿ë.
+    // »çÁø ±âÁØ È­¸é »ó´Ü ¿ìÃø¿¡ ¹èÄ¡: ÇÃ·¹ÀÌ¾î hpbar(top=0.85f)º¸´Ù À§ÂÊ, ¾à°£ ´õ Å« Æø.
     m_pBossHpbar = new CScreenShader(1);
     m_pBossHpbar->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
     CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
@@ -61,7 +61,7 @@ CBossMonster::CBossMonster(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* 
     m_pBossHpbar->SetMesh(0, pMesh);
     m_pBossHpbar->SetTexture(pTexture);
 
-    // SetHPWidthì—ì„œ meshë¥¼ ë‹¤ì‹œ ë§Œë“¤ ë•Œ í•„ìš”
+    // SetHPWidth¿¡¼­ mesh¸¦ ´Ù½Ã ¸¸µé ¶§ ÇÊ¿ä
     m_pd3dDevice = pd3dDevice;
     m_pd3dCommandList = pd3dCommandList;
 
@@ -102,7 +102,7 @@ void CBossMonster::SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition)
 
     if (m_pTerrain)
     {
-        // CTerrainPlayerì™€ ê°™ì€ HeightMap ì›ì /ë³´ê°„ ê·œì¹™ì„ ì‚¬ìš©í•œë‹¤.
+        // CTerrainPlayer¿Í °°Àº HeightMap ¿øÁ¡/º¸°£ ±ÔÄ¢À» »ç¿ëÇÑ´Ù.
         constexpr float TERRAIN_WORLD_X = -156.71f;
         constexpr float TERRAIN_WORLD_Y = -14.43f;
         constexpr float TERRAIN_WORLD_Z = -255.0f;
@@ -113,7 +113,7 @@ void CBossMonster::SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition)
         const float terrainWidth = (m_pTerrain->GetHeightMapWidth() - 1) * terrainScale.x;
         const float terrainLength = (m_pTerrain->GetHeightMapLength() - 1) * terrainScale.z;
 
-        // ë§µ ë°”ê¹¥ ìœ„ì¹˜(ìŠ¤í° ì „ì˜ ìˆ¨ê¹€ ì¢Œí‘œ ë“±)ëŠ” ì›ëž˜ ì„œë²„ Yë¥¼ ìœ ì§€í•œë‹¤.
+        // ¸Ê ¹Ù±ù À§Ä¡(½ºÆù ÀüÀÇ ¼û±è ÁÂÇ¥ µî)´Â ¿ø·¡ ¼­¹ö Y¸¦ À¯ÁöÇÑ´Ù.
         if (localX >= 0.0f && localZ >= 0.0f && localX < terrainWidth && localZ < terrainLength)
         {
             const int z = static_cast<int>(localZ / terrainScale.z);
@@ -127,8 +127,8 @@ void CBossMonster::SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition)
 
 void CBossMonster::ApplyVisualScale()
 {
-    // GetRight/Up/Lookì€ ì •ê·œí™”í•œ ì¶•ì„ ëŒë ¤ì¤€ë‹¤. ë”°ë¼ì„œ LookAtìœ¼ë¡œ ë°©í–¥ì´
-    // ê°±ì‹ ëœ ë’¤ì—ë„ ì—¬ê¸°ì„œ ì¶•ì—ë§Œ í¬ê¸°ë¥¼ ê³±í•˜ë©´ ìœ„ì¹˜ë¥¼ ê±´ë“œë¦¬ì§€ ì•Šê³  í¬ê¸°ê°€ ìœ ì§€ëœë‹¤.
+    // GetRight/Up/LookÀº Á¤±ÔÈ­ÇÑ ÃàÀ» µ¹·ÁÁØ´Ù. µû¶ó¼­ LookAtÀ¸·Î ¹æÇâÀÌ
+    // °»½ÅµÈ µÚ¿¡µµ ¿©±â¼­ Ãà¿¡¸¸ Å©±â¸¦ °öÇÏ¸é À§Ä¡¸¦ °Çµå¸®Áö ¾Ê°í Å©±â°¡ À¯ÁöµÈ´Ù.
     const XMFLOAT3 right = GetRight();
     const XMFLOAT3 up = GetUp();
     const XMFLOAT3 look = GetLook();
@@ -167,11 +167,11 @@ int CBossMonster::TrackOf(BossState s) const
     }
 }
 
-// newState(ì• ë‹ˆë©”ì´ì…˜ íŠ¸ëž™)ì— ë”°ë¼ ê³µê²©ë²”ìœ„ ì´íŽ™íŠ¸ì˜ ëª¨ì–‘/ìƒ‰ìƒ/ì›œì—…ì„ ê²°ì •í•´ì„œ ìŠ¤í°í•œë‹¤.
-// - Attack01(NORMAL) : ì›í˜•, ë…¸ëž‘, ì›œì—… 0.3ì´ˆ
-// - Attack02(SLAM)    : ì›í˜•, ë¹¨ê°•, ì›œì—… 0.6ì´ˆ
-// - Taunt(SWEEP)      : ë¶€ì±„ê¼´(ë³´ìŠ¤ê°€ ë³´ëŠ” ë°©í–¥ ê¸°ì¤€), ì£¼í™©, ì›œì—… 0.6ì´ˆ
-// - Idle/Walk/Death   : ì´íŽ™íŠ¸ ì—†ìŒ
+// newState(¾Ö´Ï¸ÞÀÌ¼Ç Æ®·¢)¿¡ µû¶ó °ø°Ý¹üÀ§ ÀÌÆåÆ®ÀÇ ¸ð¾ç/»ö»ó/¿ú¾÷À» °áÁ¤ÇØ¼­ ½ºÆùÇÑ´Ù.
+// - Attack01(NORMAL) : ¿øÇü, ³ë¶û, ¿ú¾÷ 0.3ÃÊ
+// - Attack02(SLAM)    : ¿øÇü, »¡°­, ¿ú¾÷ 0.6ÃÊ
+// - Taunt(SWEEP)      : ºÎÃ¤²Ã(º¸½º°¡ º¸´Â ¹æÇâ ±âÁØ), ÁÖÈ², ¿ú¾÷ 0.6ÃÊ
+// - Idle/Walk/Death   : ÀÌÆåÆ® ¾øÀ½
 void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& xmf3Look,
     float fRadius, float fSweepAngleDeg)
 {
@@ -181,27 +181,27 @@ void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3
     {
     case BossState::Attack01:
     {
-        XMFLOAT4 color(1.0f, 0.8f, 0.0f, 1.0f); // ë…¸ëž‘
+        XMFLOAT4 color(1.0f, 0.8f, 0.0f, 1.0f); // ³ë¶û
         m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.3f, color);
         break;
     }
     case BossState::Attack02:
     {
-        XMFLOAT4 color(1.0f, 0.1f, 0.05f, 1.0f); // ë¹¨ê°•
+        XMFLOAT4 color(1.0f, 0.1f, 0.05f, 1.0f); // »¡°­
         m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, color);
         break;
     }
     case BossState::Taunt:
     {
-        XMFLOAT4 color(1.0f, 0.5f, 0.0f, 1.0f); // ì£¼í™©
+        XMFLOAT4 color(1.0f, 0.5f, 0.0f, 1.0f); // ÁÖÈ²
         float halfAngleDeg = fSweepAngleDeg * 0.5f;
-        // ì´ë™ íŒ¨í‚·ê³¼ íŒ¨í„´ íŒ¨í‚·ì˜ ë„ì°© ìˆœì„œê°€ ë‹¬ë¼ë„ ë°©í–¥ì´ í‹€ì–´ì§€ì§€ ì•Šë„ë¡
-        // í˜„ìž¬ ëª¨ë¸ í–‰ë ¬ì´ ì•„ë‹Œ, ì´ ê³µê²©ì„ íŒì •í•œ ì„œë²„ lookì„ ê·¸ëŒ€ë¡œ ì“´ë‹¤.
+        // ÀÌµ¿ ÆÐÅ¶°ú ÆÐÅÏ ÆÐÅ¶ÀÇ µµÂø ¼ø¼­°¡ ´Þ¶óµµ ¹æÇâÀÌ Æ²¾îÁöÁö ¾Êµµ·Ï
+        // ÇöÀç ¸ðµ¨ Çà·ÄÀÌ ¾Æ´Ñ, ÀÌ °ø°ÝÀ» ÆÇÁ¤ÇÑ ¼­¹ö lookÀ» ±×´ë·Î ¾´´Ù.
         m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, xmf3Look, halfAngleDeg, color);
         break;
     }
     default:
-        // Idle/Walk/Death ë“±ì€ ê³µê²©ë²”ìœ„ ì´íŽ™íŠ¸ ì—†ìŒ
+        // Idle/Walk/Death µîÀº °ø°Ý¹üÀ§ ÀÌÆåÆ® ¾øÀ½
         break;
     }
 }
@@ -233,7 +233,7 @@ void CBossMonster::TransitionTo(BossState newState)
 
 void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& look, float fRadius, float fSweepAngleDeg)
 {
-    if (m_eState == BossState::Death) return; // ì£½ì€ ë³´ìŠ¤ëŠ” íŒ¨í„´ íŒ¨í‚·ì´ ì™€ë„ ë¬´ì‹œ(ì´íŽ™íŠ¸ë„ ìŠ¤í°í•˜ì§€ ì•ŠìŒ)
+    if (m_eState == BossState::Death) return; // Á×Àº º¸½º´Â ÆÐÅÏ ÆÐÅ¶ÀÌ ¿Íµµ ¹«½Ã(ÀÌÆåÆ®µµ ½ºÆùÇÏÁö ¾ÊÀ½)
 
     switch (newState)
     {
@@ -255,6 +255,7 @@ void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Cen
 void CBossMonster::TakeDamage(float damage)
 {
     if (m_eState == BossState::Death) return;
+	if (damage > 0.0f) TriggerHitFlash();
 
     m_fMonsterHP = max(0.0f, m_fMonsterHP - damage);
     m_fHpRatio = m_fMonsterHP / m_fMaxHP;
@@ -275,14 +276,20 @@ void CBossMonster::TakeDamage(float damage)
 
 void CBossMonster::Animate(float fTimeElapsed)
 {
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		m_fHitFlashTimer -= fTimeElapsed;
+		if (m_fHitFlashTimer < 0.0f) m_fHitFlashTimer = 0.0f;
+	}
+
     CGameObject::Animate(fTimeElapsed);
     ApplyVisualScale();
 }
 
 void CBossMonster::Update(float fTimeElapsed)
 {
-    // í”Œë ˆì´ì–´(CTerrainPlayer::Update)ì˜ SetHPWidth í˜¸ì¶œ ë°©ì‹ê³¼ ë™ì¼í•˜ê²Œ,
-    // HP ë¹„ìœ¨ì´ ë°”ë€” ë•Œë§Œ meshë¥¼ ë‹¤ì‹œ ë§Œë“¤ì–´ êµì²´í•œë‹¤.
+    // ÇÃ·¹ÀÌ¾î(CTerrainPlayer::Update)ÀÇ SetHPWidth È£Ãâ ¹æ½Ä°ú µ¿ÀÏÇÏ°Ô,
+    // HP ºñÀ²ÀÌ ¹Ù²ð ¶§¸¸ mesh¸¦ ´Ù½Ã ¸¸µé¾î ±³Ã¼ÇÑ´Ù.
     float newWidth = m_fHpRatio * BOSS_HPBAR_MAX_WIDTH;
 
     if (fabs(m_fPrevHpbarWidth - newWidth) > 0.001f)
@@ -311,11 +318,11 @@ void CBossMonster::SetHPWidth(float newWidth)
 {
     if (!m_pBossHpbar) return;
 
-    // ë” ì´ìƒ ë©”ì‹œë¥¼ ìƒˆë¡œ ë§Œë“¤ê³  SetMeshë¡œ êµì²´í•˜ì§€ ì•ŠëŠ”ë‹¤.
-    // (ì˜ˆì „ ë°©ì‹ì€ í­ì´ ë°”ë€” ë•Œë§ˆë‹¤ GPU ë²„í…ìŠ¤ ë²„í¼ë¥¼ ì¦‰ì‹œ í•´ì œí–ˆëŠ”ë°,
-    //  ë”ë¸” ë²„í¼ë§ ë•Œë¬¸ì— GPUê°€ ì´ì „ í”„ë ˆìž„ì—ì„œ ê·¸ ë²„í¼ë¥¼ ì•„ì§ ì½ëŠ” ì¤‘ì¼ ìˆ˜ ìžˆì–´
-    //  íž™ ì†ìƒìœ¼ë¡œ ì´ì–´ì§ˆ ìˆ˜ ìžˆì—ˆë‹¤. CScreenRectMeshTextured::UpdateRect()ëŠ”
-    //  ì´ë¯¸ ë§¤í•‘ëœ ê°™ì€ ë²„í¼ì˜ ë‚´ìš©ë§Œ ê°±ì‹ í•˜ë¯€ë¡œ ì´ ë¬¸ì œê°€ ì—†ë‹¤.)
+    // ´õ ÀÌ»ó ¸Þ½Ã¸¦ »õ·Î ¸¸µé°í SetMesh·Î ±³Ã¼ÇÏÁö ¾Ê´Â´Ù.
+    // (¿¹Àü ¹æ½ÄÀº ÆøÀÌ ¹Ù²ð ¶§¸¶´Ù GPU ¹öÅØ½º ¹öÆÛ¸¦ Áï½Ã ÇØÁ¦Çß´Âµ¥,
+    //  ´õºí ¹öÆÛ¸µ ¶§¹®¿¡ GPU°¡ ÀÌÀü ÇÁ·¹ÀÓ¿¡¼­ ±× ¹öÆÛ¸¦ ¾ÆÁ÷ ÀÐ´Â ÁßÀÏ ¼ö ÀÖ¾î
+    //  Èü ¼Õ»óÀ¸·Î ÀÌ¾îÁú ¼ö ÀÖ¾ú´Ù. CScreenRectMeshTextured::UpdateRect()´Â
+    //  ÀÌ¹Ì ¸ÅÇÎµÈ °°Àº ¹öÆÛÀÇ ³»¿ë¸¸ °»½ÅÇÏ¹Ç·Î ÀÌ ¹®Á¦°¡ ¾ø´Ù.)
     if (m_pBossHpbar->m_nMeshes > 0 && m_pBossHpbar->m_ppMeshes[0])
     {
         auto* pRect = static_cast<CScreenRectMeshTextured*>(m_pBossHpbar->m_ppMeshes[0]);
@@ -325,6 +332,11 @@ void CBossMonster::SetHPWidth(float newWidth)
 
 void CBossMonster::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+	float hitFlashIntensity = 0.0f;
+	if (m_fHitFlashTimer > 0.0f)
+		hitFlashIntensity = 0.5f + 0.5f * sinf(m_fHitFlashTimer * HIT_FLASH_BLINK_SPEED);
+	SetHitFlashRecursive(hitFlashIntensity, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
     CGameObject::Render(pd3dCommandList, pCamera);
 
     if (m_pBossHpbar && m_bHpbarVisible && m_eState != BossState::Death)
