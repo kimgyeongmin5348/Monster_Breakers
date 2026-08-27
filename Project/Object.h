@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File: Object.h
 //-----------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ struct GameObjectInfo
 	XMFLOAT4   specular;           // gMaterial.y
 	UINT       texturesMask;       // gnTexturesMask
 	float      hpRatio;            // g_hpRatio
-	XMFLOAT2   padding;            // ì •ë ¬ ë§ì¶¤ (float2 = 8ë°”ì´íŠ¸)
+	XMFLOAT2   padding;            // Á¤·Ä ¸ÂÃã (float2 = 8¹ÙÀÌÆ®)
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -409,7 +409,7 @@ public:
 	CMaterial* GetMaterial(int nMaterial) { return m_ppMaterials[nMaterial]; }
 
 	void SetChild(CGameObject* pChild, bool bReferenceUpdate = false);
-	void SetHitFlashRecursive(float intensity);
+	void SetHitFlashRecursive(float intensity, const XMFLOAT4& color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
 	virtual void SetPlayer(CPlayer* p) { }
 
 	void LookAt(XMFLOAT3& xmf3LookAt, XMFLOAT3& xmf3Up)
@@ -437,7 +437,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 
-	// CPUì—ì„œ ê³„ì‚°ëœ ì›”ë“œ ë³€í™˜ í–‰ë ¬ì„ GPUì˜ ì…°ì´ë”ì—ì„œ ì‚¬ìš©í•  ìˆ˜ ìˆë„ë¡ ì „ë‹¬
+	// CPU¿¡¼­ °è»êµÈ ¿ùµå º¯È¯ Çà·ÄÀ» GPUÀÇ ¼ÎÀÌ´õ¿¡¼­ »ç¿ëÇÒ ¼ö ÀÖµµ·Ï Àü´Ş
 	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, XMFLOAT4X4* pxmf4x4World);
 	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, CMaterial* pMaterial);
 
@@ -491,7 +491,7 @@ public:
 	void UpdateTransform(XMFLOAT4X4* pxmf4x4Parent = NULL);
 	CGameObject* FindFrame(char* pstrFrameName);
 
-	// ê²Œì„ ì˜¤ë¸Œì íŠ¸ì˜ ê³„ì¸µ êµ¬ì¡° ë‚´ì—ì„œ íŠ¹ì • ì´ë¦„ì„ ê°€ì§„ í…ìŠ¤ì²˜ë¥¼ ì°¾ëŠ”ë‹¤.
+	// °ÔÀÓ ¿ÀºêÁ§Æ®ÀÇ °èÃş ±¸Á¶ ³»¿¡¼­ Æ¯Á¤ ÀÌ¸§À» °¡Áø ÅØ½ºÃ³¸¦ Ã£´Â´Ù.
 	CTexture* FindReplicatedTexture(_TCHAR* pstrTextureName);
 
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0x00); }
@@ -511,14 +511,14 @@ public:
 	static void LoadAnimationFromFile(FILE* pInFile, CLoadedModelInfo* pLoadedModel);
 	static CGameObject* LoadFrameHierarchyFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, CGameObject* pParent, FILE* pInFile, CShader* pShader, int* pnSkinnedMeshes);
 
-	// ëª¨ë¸ì˜ ê¸°í•˜í•™ì  ë°ì´í„°(ë©”ì‹œ)ì™€ ì• ë‹ˆë©”ì´ì…˜ ë°ì´í„°ë¥¼ ë™ì‹œì— ë¡œë“œ
+	// ¸ğµ¨ÀÇ ±âÇÏÇĞÀû µ¥ÀÌÅÍ(¸Ş½Ã)¿Í ¾Ö´Ï¸ŞÀÌ¼Ç µ¥ÀÌÅÍ¸¦ µ¿½Ã¿¡ ·Îµå
 	static CLoadedModelInfo* LoadGeometryAndAnimationFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, char* pstrFileName, CShader* pShader);
 	static CLoadedModelInfo* LoadGeometryAndAnimationFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, std::filesystem::path pstrFileName, CShader* pShader);
 
-	// ê° í”„ë ˆì„(ê²Œì„ ì˜¤ë¸Œì íŠ¸)ì˜ ë©”ëª¨ë¦¬ ì£¼ì†Œì™€ ë¶€ëª¨ ê°ì²´ì˜ ë©”ëª¨ë¦¬ ì£¼ì†Œê°€ ì¶œë ¥
+	// °¢ ÇÁ·¹ÀÓ(°ÔÀÓ ¿ÀºêÁ§Æ®)ÀÇ ¸Ş¸ğ¸® ÁÖ¼Ò¿Í ºÎ¸ğ °´Ã¼ÀÇ ¸Ş¸ğ¸® ÁÖ¼Ò°¡ Ãâ·Â
 	static void PrintFrameInfo(CGameObject* pGameObject, CGameObject* pParent);
 
-	// ì˜¤ë¸Œì íŠ¸ì˜ ê³„ì¸µ êµ¬ì¡° ì „ì²´ë¥¼ ë³µì‚¬
+	// ¿ÀºêÁ§Æ®ÀÇ °èÃş ±¸Á¶ ÀüÃ¼¸¦ º¹»ç
 	CGameObject* Clone();
 
 	virtual void CalculateBoundingBox();
@@ -557,18 +557,18 @@ public:
 class CInteractPrompt : public CGameObject
 {
 public:
-	// pszDDSFileName ì˜ˆ: L"Texture/PressF.dds"
+	// pszDDSFileName ¿¹: L"Texture/PressF.dds"
 	CInteractPrompt(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature,
 		LPCWSTR pszDDSFileName, XMFLOAT3 xmf3Position, float fWidth = 1.0f, float fHeight = 0.5f, float fInteractRange = 2.5f);
 	virtual ~CInteractPrompt();
 
-	// ë§¤ í”„ë ˆì„ í”Œë ˆì´ì–´ ìœ„ì¹˜ë¥¼ ë°›ì•„ ê±°ë¦¬ ë¹„êµ í›„ visibleì„ ê°±ì‹ í•œë‹¤.
+	// ¸Å ÇÁ·¹ÀÓ ÇÃ·¹ÀÌ¾î À§Ä¡¸¦ ¹Ş¾Æ °Å¸® ºñ±³ ÈÄ visibleÀ» °»½ÅÇÑ´Ù.
 	void Update(const XMFLOAT3& xmf3PlayerPosition);
 
 	float GetInteractRange() const { return m_fInteractRange; }
 	void SetInteractRange(float fRange) { m_fInteractRange = fRange; }
 
-	// ê±°ë¦¬ ì¡°ê±´ì„ ë§Œì¡±í•´ì„œ visible == trueì¸ ìƒíƒœ. ì‹¤ì œ "F ì…ë ¥"ì„ ì²˜ë¦¬í• ì§€ ê²°ì •í•  ë•Œ ì‚¬ìš©.
+	// °Å¸® Á¶°ÇÀ» ¸¸Á·ÇØ¼­ visible == trueÀÎ »óÅÂ. ½ÇÁ¦ "F ÀÔ·Â"À» Ã³¸®ÇÒÁö °áÁ¤ÇÒ ¶§ »ç¿ë.
 	bool IsInRange() const { return visible; }
 
 private:

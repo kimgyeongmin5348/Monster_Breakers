@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File: CGameObject.cpp
 //-----------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@ void CMaterial::LoadTextureFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 		_stprintf_s(pstrDebug, 256, _T("Texture Name: %d %c %s\n"), (pstrTextureName[0] == '@') ? nRepeatedTextures++ : nTextures++, (pstrTextureName[0] == '@') ? '@' : ' ', pwstrTextureName);
 		OutputDebugString(pstrDebug);
 #endif
-		// ìƒˆë¡œìš´ í…ìŠ¤ì²˜ì¸ ê²½ìš° DDS íŒŒì¼ì—ì„œ í…ìŠ¤ì²˜ ë¡œë“œ
+		// »õ·Î¿î ÅØ½ºÃ³ÀÎ °æ¿ì DDS ÆÄÀÏ¿¡¼­ ÅØ½ºÃ³ ·Îµå
 		if (!bDuplicated)
 		{
 			*ppTexture = new CTexture(1, RESOURCE_TEXTURE2D, 0, 1);
@@ -306,7 +306,7 @@ void CMaterial::LoadTextureFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsComm
 
 			CScene::CreateShaderResourceViews(pd3dDevice, *ppTexture, 0, nRootParameter);
 		}
-		// ì¤‘ë³µëœ í…ìŠ¤ì²˜ì¸ ê²½ìš° ë£¨íŠ¸ ì˜¤ë¸Œì íŠ¸ê¹Œì§€ ê±°ìŠ¬ëŸ¬ ì˜¬ë¼ê°€ ì´ë¯¸ ë¡œë“œëœ í…ìŠ¤ì²˜ë¥¼ ì°¾ì•„ì„œ ì¬ì‚¬ìš©
+		// Áßº¹µÈ ÅØ½ºÃ³ÀÎ °æ¿ì ·çÆ® ¿ÀºêÁ§Æ®±îÁö °Å½½·¯ ¿Ã¶ó°¡ ÀÌ¹Ì ·ÎµåµÈ ÅØ½ºÃ³¸¦ Ã£¾Æ¼­ Àç»ç¿ë
 		else
 		{
 			if (pParent)
@@ -535,7 +535,7 @@ CAnimationController::CAnimationController(ID3D12Device *pd3dDevice, ID3D12Graph
 	m_ppd3dcbSkinningBoneTransforms = new ID3D12Resource*[m_nSkinnedMeshes];
 	m_ppcbxmf4x4MappedSkinningBoneTransforms = new XMFLOAT4X4*[m_nSkinnedMeshes];
 
-	UINT ncbElementBytes = (((sizeof(XMFLOAT4X4) * SKINNED_ANIMATION_BONES) + 255) & ~255); //256ì˜ ë°°ìˆ˜
+	UINT ncbElementBytes = (((sizeof(XMFLOAT4X4) * SKINNED_ANIMATION_BONES) + 255) & ~255); //256ÀÇ ¹è¼ö
 	for (int i = 0; i < m_nSkinnedMeshes; i++)
 	{
 		m_ppd3dcbSkinningBoneTransforms[i] = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
@@ -739,14 +739,14 @@ void CGameObject::SetChild(CGameObject *pChild, bool bReferenceUpdate)
 	}
 }
 
-void CGameObject::SetHitFlashRecursive(float intensity)
+void CGameObject::SetHitFlashRecursive(float intensity, const XMFLOAT4& color)
 {
 	if (m_ppMaterials)
 		for (int i = 0; i < m_nMaterials; i++)
-			if (m_ppMaterials[i]) m_ppMaterials[i]->SetHitFlash(intensity);
+			if (m_ppMaterials[i]) m_ppMaterials[i]->SetHitFlash(intensity, color);
 
-	if (m_pChild)   m_pChild->SetHitFlashRecursive(intensity);
-	if (m_pSibling) m_pSibling->SetHitFlashRecursive(intensity);
+	if (m_pChild)   m_pChild->SetHitFlashRecursive(intensity, color);
+	if (m_pSibling) m_pSibling->SetHitFlashRecursive(intensity, color);
 }
 
 void CGameObject::SetMesh(CMesh *pMesh)
@@ -859,7 +859,7 @@ void CGameObject::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, CC
 	{
 		UpdateShaderVariable(pd3dCommandList, &m_xmf4x4World);
 
-		// GPUì—ê²Œ ëª…ë¶€(Instance Buffer)ì˜ ìœ„ì¹˜ë¥¼ ì•Œë ¤ì¤Œ
+		// GPU¿¡°Ô ¸íºÎ(Instance Buffer)ÀÇ À§Ä¡¸¦ ¾Ë·ÁÁÜ
 		D3D12_VERTEX_BUFFER_VIEW instanceBufferView;
 		instanceBufferView.BufferLocation = pInstanceBuffer->GetGPUVirtualAddress();
 		instanceBufferView.StrideInBytes = sizeof(VS_INSTANCE_DATA);
@@ -891,10 +891,10 @@ void CGameObject::RenderShadow(ID3D12GraphicsCommandList * pd3dCommandList, CSha
 
 	if (m_pMesh)
 	{
-		//FindAndSetSkinnedMeshì™€ ë™ì¼í•œ ê¸°ì¤€(ì •ì ì— ë³¸ ê°€ì¤‘ì¹˜ê°€ ìˆëŠ”ì§€)ìœ¼ë¡œ
-		// ì´ ì„œë¸Œë©”ì‹œê°€ ìŠ¤í‚¨ ë©”ì‹œì¸ì§€ ë¦¬ì§€ë“œ(ë¬´ê¸°/ë°©íŒ¨ ë“±) ë©”ì‹œì¸ì§€ íŒë³„í•´ì„œ
-		// ê·¸ì— ë§ëŠ” ê·¸ë¦¼ì PSOë¡œ ì „í™˜í•œë‹¤. í•œ ê³„ì¸µ ì•ˆì— ëª¸í†µ(ìŠ¤í‚¨)ê³¼ ë¬´ê¸°(ë¦¬ì§€ë“œ)ê°€
-		// ì„ì—¬ ìˆì–´ë„ ê°ê° ì˜¬ë°”ë¥¸ íŒŒì´í”„ë¼ì¸ìœ¼ë¡œ ê·¸ë ¤ì§€ë„ë¡ í•˜ê¸° ìœ„í•¨.
+		//FindAndSetSkinnedMesh¿Í µ¿ÀÏÇÑ ±âÁØ(Á¤Á¡¿¡ º» °¡ÁßÄ¡°¡ ÀÖ´ÂÁö)À¸·Î
+		// ÀÌ ¼­ºê¸Ş½Ã°¡ ½ºÅ² ¸Ş½ÃÀÎÁö ¸®Áöµå(¹«±â/¹æÆĞ µî) ¸Ş½ÃÀÎÁö ÆÇº°ÇØ¼­
+		// ±×¿¡ ¸Â´Â ±×¸²ÀÚ PSO·Î ÀüÈ¯ÇÑ´Ù. ÇÑ °èÃş ¾È¿¡ ¸öÅë(½ºÅ²)°ú ¹«±â(¸®Áöµå)°¡
+		// ¼¯¿© ÀÖ¾îµµ °¢°¢ ¿Ã¹Ù¸¥ ÆÄÀÌÇÁ¶óÀÎÀ¸·Î ±×·ÁÁöµµ·Ï ÇÏ±â À§ÇÔ.
 		bool bMeshSkinned = (m_pMesh->GetType() & VERTEXT_BONE_INDEX_WEIGHT) != 0;
 		if (bMeshSkinned)
 		{
@@ -1514,14 +1514,14 @@ CGameObject* CGameObject::Clone()
 {
 	CGameObject* pNewObject = new CGameObject(*this);
 
-	// ìì‹ ê°ì²´ ë³µì‚¬
+	// ÀÚ½Ä °´Ã¼ º¹»ç
 	if (m_pChild)
 	{
 		pNewObject->m_pChild = m_pChild->Clone();
 		pNewObject->m_pChild->m_pParent = pNewObject;
 	}
 
-	// í˜•ì œ ê°ì²´ ë³µì‚¬
+	// ÇüÁ¦ °´Ã¼ º¹»ç
 	if (m_pSibling)
 	{
 		pNewObject->m_pSibling = m_pSibling->Clone();
@@ -1566,7 +1566,7 @@ CHeightMapTerrain::CHeightMapTerrain(ID3D12Device *pd3dDevice, ID3D12GraphicsCom
 
 	//SetMaterial(0, pTerrainMaterial);
 
-	// í„°ë ˆì¸ ë³´ì • (2/4)
+	// ÅÍ·¹ÀÎ º¸Á¤ (2/4)
 	float worldPosX = -156.71f;
 	float worldPosY = -14.43f;
 	float worldPosZ = -255.0f;
@@ -1780,8 +1780,8 @@ CInteractPrompt::CInteractPrompt(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 {
 	m_fInteractRange = fInteractRange;
 
-	// CRectMeshëŠ” fDepthê°€ 0ì´ë©´ XY í‰ë©´(ì¹´ë©”ë¼ë¥¼ í–¥í•œ ë¹Œë³´ë“œ ì…°ì´ë”ì—ì„œ X/Yë¥¼ ì¹´ë©”ë¼ì˜ right/upìœ¼ë¡œ
-	// ì¬í•´ì„í•˜ë¯€ë¡œ ì‹¤ì œ ì›”ë“œ í‰ë©´ ë°©í–¥ì€ ì…°ì´ë”ê°€ ê²°ì •í•œë‹¤) ì‚¬ê°í˜•ì„ ë§Œë“ ë‹¤.
+	// CRectMesh´Â fDepth°¡ 0ÀÌ¸é XY Æò¸é(Ä«¸Ş¶ó¸¦ ÇâÇÑ ºôº¸µå ¼ÎÀÌ´õ¿¡¼­ X/Y¸¦ Ä«¸Ş¶óÀÇ right/upÀ¸·Î
+	// ÀçÇØ¼®ÇÏ¹Ç·Î ½ÇÁ¦ ¿ùµå Æò¸é ¹æÇâÀº ¼ÎÀÌ´õ°¡ °áÁ¤ÇÑ´Ù) »ç°¢ÇüÀ» ¸¸µç´Ù.
 	CRectMesh* pPromptMesh = new CRectMesh(pd3dDevice, pd3dCommandList, fWidth, fHeight, 0.0f);
 	SetMesh(pPromptMesh);
 
@@ -1805,7 +1805,7 @@ CInteractPrompt::CInteractPrompt(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 
 	SetPosition(xmf3Position);
 
-	// ê±°ë¦¬ ì¡°ê±´ì„ ë§Œì¡±í•˜ê¸° ì „ê¹Œì§€ëŠ” ë³´ì´ì§€ ì•ŠëŠ”ë‹¤.
+	// °Å¸® Á¶°ÇÀ» ¸¸Á·ÇÏ±â Àü±îÁö´Â º¸ÀÌÁö ¾Ê´Â´Ù.
 	visible = false;
 }
 
@@ -1832,7 +1832,7 @@ CNPC::CNPC(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
 	SetChild(pModel->m_pModelRootObject, true);
 
 	m_pSkinnedAnimationController = new CAnimationController(pd3dDevice, pd3dCommandList, 1, pModel);
-	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // ê¸°ë³¸
+	m_pSkinnedAnimationController->SetTrackAnimationSet(0, 0); // ±âº»
 	m_pSkinnedAnimationController->SetTrackEnable(0, true);
 
 	SetPosition(-35.2, 6.6, -23);

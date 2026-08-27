@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include "Object.h"
 #include "Hpbar.h"
 #include "Shader.h"
@@ -30,40 +30,41 @@ public:
     virtual void Animate(float fTimeElapsed) override;
     virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL) override;
 
-    // ì„œë²„ê°€ SC_P_BOSS_PATTERN / SC_P_BOSS_MOVE / SC_P_BOSS_DEATH íŒ¨í‚·ìœ¼ë¡œ
-    // ìƒíƒœë¥¼ ê²°ì •í•´ì„œ ë³´ë‚´ì¤€ë‹¤. í´ë¼ì´ì–¸íŠ¸ëŠ” ê·¸ ìƒíƒœì— ë§ëŠ” ì• ë‹ˆë©”ì´ì…˜ íŠ¸ë™ë§Œ ì¬ìƒ.
+    // ¼­¹ö°¡ SC_P_BOSS_PATTERN / SC_P_BOSS_MOVE / SC_P_BOSS_DEATH ÆĞÅ¶À¸·Î
+    // »óÅÂ¸¦ °áÁ¤ÇØ¼­ º¸³»ÁØ´Ù. Å¬¶óÀÌ¾ğÆ®´Â ±× »óÅÂ¿¡ ¸Â´Â ¾Ö´Ï¸ŞÀÌ¼Ç Æ®·¢¸¸ Àç»ı.
     void       TransitionTo(BossState newState);
     BossState  GetState() const { return m_eState; }
 
-    // ê³µê²© íŒ¨í„´ ì¬ìƒ: ì• ë‹ˆë©”ì´ì…˜ ì „í™˜ + (Attack01/Attack02/Taunt íŠ¸ë™ì´ë©´) ê³µê²©ë²”ìœ„ ì´í™íŠ¸ê¹Œì§€
-    // í•œ ë²ˆì— ì²˜ë¦¬í•œë‹¤. ì´í™íŠ¸ ëª¨ì–‘(ì›í˜•/ë¶€ì±„ê¼´)Â·ìƒ‰ìƒÂ·ì›œì—…ì€ newStateì— ë”°ë¼ ë³´ìŠ¤ê°€ ì§ì ‘ ê²°ì •í•œë‹¤.
-    // xmf3Center/fRadius/fSweepAngleDeg : ì„œë²„ íŒ¨í‚·(sc_packet_boss_pattern)ì—ì„œ ê·¸ëŒ€ë¡œ ì „ë‹¬.
-    // fSweepAngleDegëŠ” ë¶€ì±„ê¼´(Taunt=SWEEP)ì—ì„œë§Œ ì‚¬ìš©ë˜ê³ , ì›í˜• íŒ¨í„´ì—ì„œëŠ” ë¬´ì‹œëœë‹¤.
+    // °ø°İ ÆĞÅÏ Àç»ı: ¾Ö´Ï¸ŞÀÌ¼Ç ÀüÈ¯ + (Attack01/Attack02/Taunt Æ®·¢ÀÌ¸é) °ø°İ¹üÀ§ ÀÌÆåÆ®±îÁö
+    // ÇÑ ¹ø¿¡ Ã³¸®ÇÑ´Ù. ÀÌÆåÆ® ¸ğ¾ç(¿øÇü/ºÎÃ¤²Ã)¡¤»ö»ó¡¤¿ú¾÷Àº newState¿¡ µû¶ó º¸½º°¡ Á÷Á¢ °áÁ¤ÇÑ´Ù.
+    // xmf3Center/fRadius/fSweepAngleDeg : ¼­¹ö ÆĞÅ¶(sc_packet_boss_pattern)¿¡¼­ ±×´ë·Î Àü´Ş.
+    // fSweepAngleDeg´Â ºÎÃ¤²Ã(Taunt=SWEEP)¿¡¼­¸¸ »ç¿ëµÇ°í, ¿øÇü ÆĞÅÏ¿¡¼­´Â ¹«½ÃµÈ´Ù.
     void PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& look, float fRadius, float fSweepAngleDeg = 0.0f);
 
     void  TakeDamage(float damage);
+	void  TriggerHitFlash() { m_fHitFlashTimer = HIT_FLASH_DURATION; }
     float GetHP()      const { return m_fMonsterHP; }
     float GetHPRatio() const { return m_fHpRatio; }
     bool  IsDead()     const { return m_fMonsterHP <= 0.0f; }
 
-    // LookAt()ì€ íšŒì „ í–‰ë ¬ì„ ë‹¨ìœ„ í¬ê¸°ë¡œ ë‹¤ì‹œ ì“°ë¯€ë¡œ, ë³´ìŠ¤ì˜ ì‹œê° í¬ê¸°ë¥¼
-    // ë‹¤ì‹œ ì ìš©í•´ ë‘”ë‹¤. ê·¸ë ‡ì§€ ì•Šìœ¼ë©´ ë‹¤ìŒ ì´ë™ íŒ¨í‚·ì—ì„œ ë³´ìŠ¤ê°€ 1ë°°ê°€ ëœë‹¤.
+    // LookAt()Àº È¸Àü Çà·ÄÀ» ´ÜÀ§ Å©±â·Î ´Ù½Ã ¾²¹Ç·Î, º¸½ºÀÇ ½Ã°¢ Å©±â¸¦
+    // ´Ù½Ã Àû¿ëÇØ µĞ´Ù. ±×·¸Áö ¾ÊÀ¸¸é ´ÙÀ½ ÀÌµ¿ ÆĞÅ¶¿¡¼­ º¸½º°¡ 1¹è°¡ µÈ´Ù.
     void SetLookDirection(const XMFLOAT3& xmf3Look);
     void SetVisualScale(float fScale);
     void SetTerrain(CHeightMapTerrain* pTerrain);
 
-    // ì„œë²„ëŠ” X/Z ìœ„ì¹˜ë§Œ ê¶Œìœ„ ìˆê²Œ ì „ë‹¬í•œë‹¤. YëŠ” í´ë¼ì´ì–¸íŠ¸ì˜ ë™ì¼í•œ HeightMapì—ì„œ
-    // ê³„ì‚°í•´ ë³´ìŠ¤ì˜ ë°œì´ ì§€í˜• ìœ„ì— ë¶™ë„ë¡ í•œë‹¤.
+    // ¼­¹ö´Â X/Z À§Ä¡¸¸ ±ÇÀ§ ÀÖ°Ô Àü´ŞÇÑ´Ù. Y´Â Å¬¶óÀÌ¾ğÆ®ÀÇ µ¿ÀÏÇÑ HeightMap¿¡¼­
+    // °è»êÇØ º¸½ºÀÇ ¹ßÀÌ ÁöÇü À§¿¡ ºÙµµ·Ï ÇÑ´Ù.
     void SetPositionOnTerrain(const XMFLOAT3& xmf3ServerPosition);
 
     void SetPlayer(CPlayer* p) { m_pPlayer = p; }
     void SetMonsterID(int id) { m_nMonsterID = id; }
     int  GetMonsterID() const { return m_nMonsterID; }
 
-    // ë°”ë‹¥ ê³µê²©ë²”ìœ„(í…”ë ˆê·¸ë˜í”„) ì´í™íŠ¸ í’€. ì†Œìœ ê¶Œì€ Sceneì— ìˆê³ , ë³´ìŠ¤ëŠ” í¬ì¸í„°ë§Œ ë°›ì•„ì„œ Spawn()ë§Œ í˜¸ì¶œí•œë‹¤.
+    // ¹Ù´Ú °ø°İ¹üÀ§(ÅÚ·¹±×·¡ÇÁ) ÀÌÆåÆ® Ç®. ¼ÒÀ¯±ÇÀº Scene¿¡ ÀÖ°í, º¸½º´Â Æ÷ÀÎÅÍ¸¸ ¹Ş¾Æ¼­ Spawn()¸¸ È£ÃâÇÑ´Ù.
     void SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect);
 
-    // ì‚¬ë§ ì‹œ í„°ëœ¨ë¦´ íŒŒí‹°í´ ë²„ìŠ¤íŠ¸. ì†Œìœ ê¶Œì€ Sceneì— ìˆê³ , ë³´ìŠ¤ëŠ” í¬ì¸í„°ë§Œ ë°›ì•„ì„œ Emit()ë§Œ í˜¸ì¶œí•œë‹¤.
+    // »ç¸Á ½Ã ÅÍ¶ß¸± ÆÄÆ¼Å¬ ¹ö½ºÆ®. ¼ÒÀ¯±ÇÀº Scene¿¡ ÀÖ°í, º¸½º´Â Æ÷ÀÎÅÍ¸¸ ¹Ş¾Æ¼­ Emit()¸¸ È£ÃâÇÑ´Ù.
     void SetDeathBurstSystem(CDeathBurstSystem* pSystem) { m_pDeathBurstSystem = pSystem; }
 
     CTextureToScreenShader* m_pBossHpbar = NULL;
@@ -75,13 +76,14 @@ public:
 
     void SetHP(float hp)
     {
+		if (hp < m_fMonsterHP) TriggerHitFlash();
         m_fMonsterHP = hp;
         m_fHpRatio = m_fMonsterHP / m_fMaxHP;
     }
 
     virtual void Update(float fTimeElapsed);
 
-    // í”Œë ˆì´ì–´ HPë°”ì™€ ë™ì¼í•œ ë°©ì‹ìœ¼ë¡œ, ë¹„ìœ¨(newWidth)ì— ë§ì¶° hpbar ë©”ì‹œë¥¼ ìƒˆë¡œ ë§Œë“¤ì–´ êµì²´í•œë‹¤.
+    // ÇÃ·¹ÀÌ¾î HP¹Ù¿Í µ¿ÀÏÇÑ ¹æ½ÄÀ¸·Î, ºñÀ²(newWidth)¿¡ ¸ÂÃç hpbar ¸Ş½Ã¸¦ »õ·Î ¸¸µé¾î ±³Ã¼ÇÑ´Ù.
     void SetHPWidth(float newWidth);
     bool IsHpbarVisible() const { return m_bHpbarVisible; }
     void SetHpbarVisible(bool bVisible) { m_bHpbarVisible = bVisible; }
@@ -89,8 +91,8 @@ public:
 private:
     int TrackOf(BossState s) const;
 
-    // newState(ì• ë‹ˆë©”ì´ì…˜ íŠ¸ë™)ì— ë”°ë¼ ê³µê²©ë²”ìœ„ ì´í™íŠ¸ë¥¼ ìŠ¤í°í•œë‹¤.
-    // Idle/Walk/Death ë“± ë¹„ê³µê²© ìƒíƒœì—ì„œëŠ” ì•„ë¬´ ì¼ë„ í•˜ì§€ ì•ŠëŠ”ë‹¤.
+    // newState(¾Ö´Ï¸ŞÀÌ¼Ç Æ®·¢)¿¡ µû¶ó °ø°İ¹üÀ§ ÀÌÆåÆ®¸¦ ½ºÆùÇÑ´Ù.
+    // Idle/Walk/Death µî ºñ°ø°İ »óÅÂ¿¡¼­´Â ¾Æ¹« ÀÏµµ ÇÏÁö ¾Ê´Â´Ù.
     void SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& xmf3Look,
         float fRadius, float fSweepAngleDeg);
     void ApplyVisualScale();
@@ -105,18 +107,21 @@ private:
     float        m_fMonsterHP = 50000.f;
     float        m_fMaxHP = 50000.f;
     float        m_fHpRatio = 1.0f;
+	float        m_fHitFlashTimer = 0.0f;
+	static constexpr float HIT_FLASH_DURATION = 0.4f;
+	static constexpr float HIT_FLASH_BLINK_SPEED = 25.0f;
 
     BossState    m_eState = BossState::Idle;
 
-    // hpbar ë©”ì‹œ ì¬ìƒì„±ìš©ìœ¼ë¡œ ë³´ê´€í•´ë‘ëŠ” device/cmdList (í”Œë ˆì´ì–´ SetHPWidthì™€ ë™ì¼í•œ ë°©ì‹)
+    // hpbar ¸Ş½Ã Àç»ı¼º¿ëÀ¸·Î º¸°üÇØµÎ´Â device/cmdList (ÇÃ·¹ÀÌ¾î SetHPWidth¿Í µ¿ÀÏÇÑ ¹æ½Ä)
     ID3D12Device* m_pd3dDevice = nullptr;
     ID3D12GraphicsCommandList* m_pd3dCommandList = nullptr;
 
-    // ë§¤ í”„ë ˆì„ ë¶ˆí•„ìš”í•œ mesh ì¬ìƒì„±ì„ ë§‰ê¸° ìœ„í•œ ì´ì „ í­ ìºì‹œ
+    // ¸Å ÇÁ·¹ÀÓ ºÒÇÊ¿äÇÑ mesh Àç»ı¼ºÀ» ¸·±â À§ÇÑ ÀÌÀü Æø Ä³½Ã
     float m_fPrevHpbarWidth = -1.0f;
 
     bool m_bHpbarVisible = false;
 
-    float m_fWalkSoundTimer = 0.0f; // ê±·ëŠ” ì†Œë¦¬ íƒ€ì´ë¨¸
+    float m_fWalkSoundTimer = 0.0f; // °È´Â ¼Ò¸® Å¸ÀÌ¸Ó
     float m_fVisualScale = 6.0f;
 };
