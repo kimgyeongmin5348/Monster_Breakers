@@ -43,6 +43,15 @@ OtherPlayer::~OtherPlayer()
 
 void OtherPlayer::Animate(int animation, float fTimeElapsed)
 {
+	float hitFlashIntensity = 0.0f;
+	if (m_fHitFlashTimer > 0.0f)
+	{
+		m_fHitFlashTimer -= fTimeElapsed;
+		if (m_fHitFlashTimer < 0.0f) m_fHitFlashTimer = 0.0f;
+		hitFlashIntensity = 0.5f + 0.5f * sinf(m_fHitFlashTimer * HIT_FLASH_BLINK_SPEED);
+	}
+	SetHitFlashRecursive(hitFlashIntensity);
+
 	if (m_pSkinnedAnimationController)
 	{
 		if (m_animBlend.active)

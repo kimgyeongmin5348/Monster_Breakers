@@ -15,6 +15,9 @@ public:
     float	maxHP = 100.f;
     long long networkID = -1;
     std::wstring playerID;
+	float m_fHitFlashTimer = 0.0f;
+	static constexpr float HIT_FLASH_DURATION = 0.4f;
+	static constexpr float HIT_FLASH_BLINK_SPEED = 25.0f;
 
     int     level[3] = { 1,1,1 };
 	float damage = 1.f;
@@ -60,5 +63,6 @@ public:
     AnimationBlend m_animBlend;
 
     void StartAnimationBlend(int fromTrack, int toTrack, float blendTime);
+	void TriggerHitFlash() { m_fHitFlashTimer = HIT_FLASH_DURATION; }
 
 };
