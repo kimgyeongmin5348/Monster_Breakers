@@ -1843,9 +1843,9 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			send_toggle_invincible_packet();
 			break;
 
-		case VK_F10:
+		case 'O':
 			m_bDebugMode = !m_bDebugMode;
-			break;
+			break;	
 
 		case VK_CAPITAL:
 			g_bAnimationBlendEnabled = !g_bAnimationBlendEnabled;
