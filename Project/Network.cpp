@@ -732,6 +732,23 @@ void ProcessPacket(char* ptr)
         break;
     }
 
+    case SC_P_PLAYER_HIT:
+    {
+        sc_packet_player_hit* packet = reinterpret_cast<sc_packet_player_hit*>(ptr);
+        if (packet->playerID == g_myid) break;
+
+        auto slotIt = g_other_player_slots.find(packet->playerID);
+        if (slotIt == g_other_player_slots.end()) break;
+
+        CScene* scene = gGameFramework.GetCurrentScene();
+        if (!scene) break;
+
+        OtherPlayer* target = scene->m_ppOtherPlayers[slotIt->second];
+        if (target && target->isConnedted)
+            target->TriggerHitFlash();
+        break;
+    }
+
     case SC_P_WEAPON_POS: // 도끼 무기 위치 (도적)
     {
         sc_packet_weapon_pos* packet = reinterpret_cast<sc_packet_weapon_pos*>(ptr);

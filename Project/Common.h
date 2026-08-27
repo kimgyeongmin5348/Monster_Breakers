@@ -82,6 +82,7 @@ constexpr char SC_P_MISSION_PROGRESS = 78;
 constexpr char SC_P_PLAYER_HP = 79;
 constexpr char CS_P_TOGGLE_INVINCIBLE = 80;
 constexpr char SC_P_INVINCIBLE = 81;
+constexpr char SC_P_PLAYER_HIT = 82;
 
 
 // =================== 주의!! ========================
@@ -232,6 +233,12 @@ struct sc_packet_invincible {
 	char          type;
 	long long     playerID;
 	bool          enabled;
+};
+
+struct sc_packet_player_hit {
+	unsigned char size;
+	char          type;
+	long long     playerID;
 };
 
 struct cs_packet_use_gold {
