@@ -1128,7 +1128,11 @@ void CGameFramework::UpdateMonsterState(CMonster* pMonster, int state)
 	case 0: pMonster->m_pSkinnedAnimationController->SetTrackEnable(0, true); break; // idle
 	case 1: pMonster->m_pSkinnedAnimationController->SetTrackEnable(1, true); break; // walk
 	case 2: pMonster->m_pSkinnedAnimationController->SetTrackEnable(2, true); break; // attack
-	case 3: pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true); break; // gethit
+	case 3:
+		// 다른 플레이어의 공격에도 매번 피격 애니메이션이 처음부터 재생되게 한다.
+		pMonster->m_pSkinnedAnimationController->SetTrackPosition(3, 0.0f);
+		pMonster->m_pSkinnedAnimationController->SetTrackEnable(3, true);
+		break; // gethit
 	case 4: pMonster->m_pSkinnedAnimationController->SetTrackEnable(4, true); break; // death
 	default: break;
 	}

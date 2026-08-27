@@ -88,7 +88,7 @@ public:
 			m_pCamera->StartShake(0.5f, 1.0f, 25.0f);
 		}
 		m_pPlayer->currentHP = hp;
-		m_pPlayer->maxHP += hp;
+		m_pPlayer->maxHP = 100.0f;
 	}
 	void UpdatePlayerGold(int gold) {
 		m_pPlayer->Pgold = gold;

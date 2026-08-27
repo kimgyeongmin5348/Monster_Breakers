@@ -13,6 +13,8 @@ public:
     
     float	currentHP = 100.f;
     float	maxHP = 100.f;
+    long long networkID = -1;
+    std::wstring playerID;
 
     int     level[3] = { 1,1,1 };
 	float damage = 1.f;
