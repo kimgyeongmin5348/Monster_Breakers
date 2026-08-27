@@ -49,7 +49,7 @@ public:
     // 다시 적용해 둔다. 그렇지 않으면 다음 이동 패킷에서 보스가 1배가 된다.
     void SetLookDirection(const XMFLOAT3& xmf3Look);
     void SetVisualScale(float fScale);
-    void SetTerrain(CHeightMapTerrain* pTerrain) { m_pTerrain = pTerrain; }
+    void SetTerrain(CHeightMapTerrain* pTerrain);
 
     // 서버는 X/Z 위치만 권위 있게 전달한다. Y는 클라이언트의 동일한 HeightMap에서
     // 계산해 보스의 발이 지형 위에 붙도록 한다.
@@ -60,7 +60,7 @@ public:
     int  GetMonsterID() const { return m_nMonsterID; }
 
     // 바닥 공격범위(텔레그래프) 이펙트 풀. 소유권은 Scene에 있고, 보스는 포인터만 받아서 Spawn()만 호출한다.
-    void SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect) { m_pGroundAttackRangeEffect = pEffect; }
+    void SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect);
 
     CTextureToScreenShader* m_pBossHpbar = NULL;
 
@@ -87,7 +87,8 @@ private:
 
     // newState(애니메이션 트랙)에 따라 공격범위 이펙트를 스폰한다.
     // Idle/Walk/Death 등 비공격 상태에서는 아무 일도 하지 않는다.
-    void SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg);
+    void SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& xmf3Look,
+        float fRadius, float fSweepAngleDeg);
     void ApplyVisualScale();
 
     CGroundAttackRangeEffect* m_pGroundAttackRangeEffect = nullptr;

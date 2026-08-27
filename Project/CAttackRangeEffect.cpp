@@ -1,6 +1,131 @@
 ﻿#include "stdafx.h"
 #include "CAttackRangeEffect.h"
-#include "CRectMesh.h"
+
+namespace
+{
+    constexpr int TERRAIN_RANGE_GRID_CELLS = 24;
+    constexpr float TERRAIN_RANGE_Y_OFFSET = 0.05f;
+
+    // 기존 사각형 2개의 정점만 있는 평면은 경사진 지형을 관통한다.
+    // 범위를 격자로 나눈 후 각 정점의 Y를 HeightMap에서 샘플링해
+    // 경사와 높낮이를 따라가는 공격 범위를 만든다.
+    class CTerrainRangeMesh final : public CMesh
+    {
+    public:
+        explicit CTerrainRangeMesh(ID3D12Device* pd3dDevice)
+            : CMesh(pd3dDevice, nullptr)
+        {
+            m_nVertices = TERRAIN_RANGE_GRID_CELLS * TERRAIN_RANGE_GRID_CELLS * 6;
+            m_nStride = sizeof(CTexturedVertex);
+            m_nOffset = 0;
+            m_nSlot = 0;
+            m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+            D3D12_HEAP_PROPERTIES heapProps = {};
+            heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+            D3D12_RESOURCE_DESC resourceDesc = {};
+            resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            resourceDesc.Width = static_cast<UINT64>(m_nStride) * m_nVertices;
+            resourceDesc.Height = 1;
+            resourceDesc.DepthOrArraySize = 1;
+            resourceDesc.MipLevels = 1;
+            resourceDesc.SampleDesc.Count = 1;
+            resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+            const HRESULT hr = pd3dDevice->CreateCommittedResource(
+                &heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+                D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                __uuidof(ID3D12Resource), reinterpret_cast<void**>(&m_pd3dPositionBuffer));
+
+            if (SUCCEEDED(hr))
+            {
+                D3D12_RANGE readRange = { 0, 0 };
+                m_pd3dPositionBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pMappedVertices));
+
+                m_d3dPositionBufferView.BufferLocation = m_pd3dPositionBuffer->GetGPUVirtualAddress();
+                m_d3dPositionBufferView.StrideInBytes = m_nStride;
+                m_d3dPositionBufferView.SizeInBytes = m_nStride * m_nVertices;
+            }
+        }
+
+        ~CTerrainRangeMesh() override
+        {
+            if (m_pd3dPositionBuffer && m_pMappedVertices)
+            {
+                m_pd3dPositionBuffer->Unmap(0, nullptr);
+                m_pMappedVertices = nullptr;
+            }
+        }
+
+        void UpdateForTerrain(const XMFLOAT3& center, float radius, CHeightMapTerrain* pTerrain)
+        {
+            if (!m_pMappedVertices) return;
+
+            constexpr int VERTICES_PER_SIDE = TERRAIN_RANGE_GRID_CELLS + 1;
+            XMFLOAT3 positions[VERTICES_PER_SIDE * VERTICES_PER_SIDE];
+
+            const XMFLOAT3 terrainOrigin = pTerrain ? pTerrain->GetPosition() : XMFLOAT3(0.0f, 0.0f, 0.0f);
+            const XMFLOAT3 terrainScale = pTerrain ? pTerrain->GetScale() : XMFLOAT3(1.0f, 1.0f, 1.0f);
+            const float terrainWidth = pTerrain ? (pTerrain->GetHeightMapWidth() - 1) * terrainScale.x : 0.0f;
+            const float terrainLength = pTerrain ? (pTerrain->GetHeightMapLength() - 1) * terrainScale.z : 0.0f;
+
+            for (int z = 0; z < VERTICES_PER_SIDE; ++z)
+            {
+                const float v = static_cast<float>(z) / TERRAIN_RANGE_GRID_CELLS;
+                const float worldZ = center.z + ((v * 2.0f) - 1.0f) * radius;
+
+                for (int x = 0; x < VERTICES_PER_SIDE; ++x)
+                {
+                    const float u = static_cast<float>(x) / TERRAIN_RANGE_GRID_CELLS;
+                    const float worldX = center.x + ((u * 2.0f) - 1.0f) * radius;
+                    float worldY = center.y + TERRAIN_RANGE_Y_OFFSET;
+
+                    if (pTerrain)
+                    {
+                        const float localX = worldX - terrainOrigin.x;
+                        const float localZ = worldZ - terrainOrigin.z;
+                        if (localX >= 0.0f && localZ >= 0.0f && localX < terrainWidth && localZ < terrainLength)
+                        {
+                            const int terrainZ = static_cast<int>(localZ / terrainScale.z);
+                            const bool reverseQuad = (terrainZ % 2) != 0;
+                            worldY = pTerrain->GetHeight(localX, localZ, reverseQuad)
+                                + terrainOrigin.y + TERRAIN_RANGE_Y_OFFSET;
+                        }
+                    }
+
+                    positions[z * VERTICES_PER_SIDE + x] = XMFLOAT3(worldX, worldY, worldZ);
+                }
+            }
+
+            int out = 0;
+            for (int z = 0; z < TERRAIN_RANGE_GRID_CELLS; ++z)
+            {
+                const float v0 = static_cast<float>(z) / TERRAIN_RANGE_GRID_CELLS;
+                const float v1 = static_cast<float>(z + 1) / TERRAIN_RANGE_GRID_CELLS;
+                for (int x = 0; x < TERRAIN_RANGE_GRID_CELLS; ++x)
+                {
+                    const float u0 = static_cast<float>(x) / TERRAIN_RANGE_GRID_CELLS;
+                    const float u1 = static_cast<float>(x + 1) / TERRAIN_RANGE_GRID_CELLS;
+                    const XMFLOAT3& p00 = positions[z * VERTICES_PER_SIDE + x];
+                    const XMFLOAT3& p10 = positions[z * VERTICES_PER_SIDE + x + 1];
+                    const XMFLOAT3& p01 = positions[(z + 1) * VERTICES_PER_SIDE + x];
+                    const XMFLOAT3& p11 = positions[(z + 1) * VERTICES_PER_SIDE + x + 1];
+
+                    m_pMappedVertices[out++] = CTexturedVertex(p00, XMFLOAT2(u0, v0));
+                    m_pMappedVertices[out++] = CTexturedVertex(p01, XMFLOAT2(u0, v1));
+                    m_pMappedVertices[out++] = CTexturedVertex(p11, XMFLOAT2(u1, v1));
+                    m_pMappedVertices[out++] = CTexturedVertex(p00, XMFLOAT2(u0, v0));
+                    m_pMappedVertices[out++] = CTexturedVertex(p11, XMFLOAT2(u1, v1));
+                    m_pMappedVertices[out++] = CTexturedVertex(p10, XMFLOAT2(u1, v0));
+                }
+            }
+        }
+
+    private:
+        CTexturedVertex* m_pMappedVertices = nullptr;
+    };
+}
 
 CGroundAttackRangeEffect::CGroundAttackRangeEffect()
 {}
@@ -19,7 +144,7 @@ void CGroundAttackRangeEffect::Create(ID3D12Device* pd3dDevice, ID3D12GraphicsCo
     for (int i = 0; i < nPoolSize; ++i)
     {
         // -1..1 범위의 평평한 사각 메쉬. PlaceFlatOnGround에서 SetScale(radius)로 실제 반지름을 맞춘다.
-        CMesh* pMesh = new CRectMesh(pd3dDevice, pd3dCommandList, 2.0f, 2.0f, 0.0f, 0.0f, 0.0f);
+        CMesh* pMesh = new CTerrainRangeMesh(pd3dDevice);
 
         CGameObject* pObject = new CGameObject(1);
         pObject->SetMesh(pMesh);
@@ -56,34 +181,19 @@ void CGroundAttackRangeEffect::ReleaseUploadBuffers()
         if (ind.pObject) ind.pObject->ReleaseUploadBuffers();
 }
 
-// 매번 ToParent 행렬을 새로 구성한다(SetScale/Rotate는 누적형이라 재사용 풀에는 부적합).
-void CGroundAttackRangeEffect::PlaceFlatOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius)
+// 지형을 샘플링한 월드 좌표 격자로 갱신한다.
+void CGroundAttackRangeEffect::PlaceOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius)
 {
-    float fScale = fRadius * 1.5f; // 크기 키우기
+    const float visualRadius = fRadius * 1.5f;
+    auto* pTerrainMesh = static_cast<CTerrainRangeMesh*>(pObject->m_pMesh);
+    if (pTerrainMesh) pTerrainMesh->UpdateForTerrain(xmf3Center, visualRadius, m_pTerrain);
 
-    // 회전행렬 곱셈 순서에 기대지 않고, 기저벡터를 행렬에 직접 박아서
-    // "로컬 법선(Z) = 월드 Up(0,1,0)"을 강제한다 -> 무조건 완전 평평.
-    //   로컬 +X -> 월드 +X (가로)
-    //   로컬 +Y -> 월드 +Z (세로, 기존 atan2(dx,dz) 매핑과 동일하게 유지)
-    //   로컬 +Z(법선) -> 월드 +Y (항상 하늘 방향)
-    XMFLOAT4X4 mtx;
-    mtx._11 = fScale; mtx._12 = 0.0f;  mtx._13 = 0.0f;  mtx._14 = 0.0f;
-    mtx._21 = 0.0f;   mtx._22 = 0.0f;  mtx._23 = fScale; mtx._24 = 0.0f;
-    mtx._31 = 0.0f;   mtx._32 = 1.0f;  mtx._33 = 0.0f;  mtx._34 = 0.0f;
-    mtx._41 = xmf3Center.x;
-    mtx._42 = xmf3Center.y + 0.05f; // z-fighting 방지
-    mtx._43 = xmf3Center.z;
-    mtx._44 = 1.0f;
-
-    pObject->m_xmf4x4ToParent = mtx;
+    // 메시 정점이 이미 월드 좌표이므로 오브젝트 행렬은 단위 행렬을 쓴다.
+    pObject->m_xmf4x4ToParent = Matrix4x4::Identity();
     pObject->UpdateTransform(NULL);
 }
 
-// CRectMesh(가로 2, 높이 2)는 로컬 XY 평면에 만들어지고, u = (x + 1) / 2, v = (y + 1) / 2로 매핑된다고 가정한다.
-// PlaceFlatOnGround()가 RotationX(+90도)로 눕히므로(DirectXMath 행벡터 기준 검증함):
-//   로컬 +X -> 월드 +X, 로컬 +Y -> 월드 +Z. 부호 반전 없이 그대로 대응된다.
-// 즉 월드 방향(dx, dz)을 로컬 평면 각도로 바꾸려면 atan2(dx, dz)를 그대로 쓰면 된다.
-// (만약 실제로 좌우/앞뒤가 뒤집혀 보이면 이 한 줄의 부호만 맞추면 된다.)
+// 격자 UV의 +X/+Y는 월드 +X/+Z와 같은 방향이다.
 float CGroundAttackRangeEffect::WorldDirectionToLocalAngle(const XMFLOAT3 & xmf3Direction)
 {
     float dx = xmf3Direction.x;
@@ -125,7 +235,7 @@ void CGroundAttackRangeEffect::Spawn(const XMFLOAT3& xmf3Center, float fRadius, 
     ind.fFacingAngle = 0.0f;
     ind.fHalfAngle = XM_PI;
 
-    PlaceFlatOnGround(ind.pObject, xmf3Center, fRadius);
+    PlaceOnGround(ind.pObject, xmf3Center, fRadius);
     ind.pObject->SetVisible(true);
 }
 
@@ -143,10 +253,10 @@ void CGroundAttackRangeEffect::Spawn(const XMFLOAT3& xmf3Center, float fRadius, 
     ind.fWarmupTime = max(0.05f, fWarmupTime);
     ind.xmf3Color = XMFLOAT3(xmf4Color.x, xmf4Color.y, xmf4Color.z);
     ind.bSector = true;
-    ind.fFacingAngle = -WorldDirectionToLocalAngle(xmf3Direction);
+    ind.fFacingAngle = WorldDirectionToLocalAngle(xmf3Direction);
     ind.fHalfAngle = XMConvertToRadians(max(1.0f, fHalfAngleDeg));
 
-    PlaceFlatOnGround(ind.pObject, xmf3Center, fRadius);
+    PlaceOnGround(ind.pObject, xmf3Center, fRadius);
     ind.pObject->SetVisible(true);
 }
 

@@ -11,6 +11,7 @@ public:
         ID3D12RootSignature* pd3dGraphicsRootSignature, int nPoolSize = 4);
     void Release();
     void ReleaseUploadBuffers();
+    void SetTerrain(CHeightMapTerrain* pTerrain) { m_pTerrain = pTerrain; }
 
     // xmf3Center   : 바닥 중심 위치(보통 공격자의 현재 위치, Y는 지면 높이)
     // fRadius      : 공격범위 반지름
@@ -45,7 +46,7 @@ private:
         float        fHalfAngle = XM_PI;    // 부채꼴 절반각(라디안). 원형일 땐 의미 없음
     };
 
-    void PlaceFlatOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius);
+    void PlaceOnGround(CGameObject* pObject, const XMFLOAT3& xmf3Center, float fRadius);
     int  AcquireSlot(); // 비활성 슬롯 또는 라운드로빈으로 재사용할 인덱스 선택
 
     // 월드 XZ 방향 벡터를 PSGroundRange가 쓰는 "메쉬 로컬 평면" 각도로 변환.
@@ -54,4 +55,5 @@ private:
 
     std::vector<Indicator> m_vIndicators;
     int                     m_nNextIndex = 0; // 풀이 가득 찼을 때 다음에 재사용할 인덱스(라운드로빈)
+    CHeightMapTerrain*      m_pTerrain = nullptr;
 };

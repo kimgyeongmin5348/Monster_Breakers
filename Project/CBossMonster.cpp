@@ -79,6 +79,13 @@ void CBossMonster::SetVisualScale(float fScale)
     ApplyVisualScale();
 }
 
+void CBossMonster::SetTerrain(CHeightMapTerrain* pTerrain)
+{
+    m_pTerrain = pTerrain;
+    if (m_pGroundAttackRangeEffect)
+        m_pGroundAttackRangeEffect->SetTerrain(m_pTerrain);
+}
+
 void CBossMonster::SetLookDirection(const XMFLOAT3& xmf3Look)
 {
     XMFLOAT3 pos = GetPosition();
@@ -138,6 +145,13 @@ void CBossMonster::ApplyVisualScale()
     UpdateTransform(NULL);
 }
 
+void CBossMonster::SetGroundAttackRangeEffect(CGroundAttackRangeEffect* pEffect)
+{
+    m_pGroundAttackRangeEffect = pEffect;
+    if (m_pGroundAttackRangeEffect)
+        m_pGroundAttackRangeEffect->SetTerrain(m_pTerrain);
+}
+
 int CBossMonster::TrackOf(BossState s) const
 {
     switch (s)
@@ -157,7 +171,8 @@ int CBossMonster::TrackOf(BossState s) const
 // - Attack02(SLAM)    : 원형, 빨강, 웜업 0.6초
 // - Taunt(SWEEP)      : 부채꼴(보스가 보는 방향 기준), 주황, 웜업 0.6초
 // - Idle/Walk/Death   : 이펙트 없음
-void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, float fRadius, float fSweepAngleDeg)
+void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3Center, const XMFLOAT3& xmf3Look,
+    float fRadius, float fSweepAngleDeg)
 {
     if (!m_pGroundAttackRangeEffect) return;
 
@@ -179,7 +194,9 @@ void CBossMonster::SpawnAttackEffectFor(BossState newState, const XMFLOAT3& xmf3
     {
         XMFLOAT4 color(1.0f, 0.5f, 0.0f, 1.0f); // 주황
         float halfAngleDeg = fSweepAngleDeg * 0.5f;
-        m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, GetLook(), halfAngleDeg, color);
+        // 이동 패킷과 패턴 패킷의 도착 순서가 달라도 방향이 틀어지지 않도록
+        // 현재 모델 행렬이 아닌, 이 공격을 판정한 서버 look을 그대로 쓴다.
+        m_pGroundAttackRangeEffect->Spawn(xmf3Center, fRadius, 0.6f, xmf3Look, halfAngleDeg, color);
         break;
     }
     default:
@@ -231,7 +248,7 @@ void CBossMonster::PlayAttackPattern(BossState newState, const XMFLOAT3& xmf3Cen
     }
 
     TransitionTo(newState);
-    SpawnAttackEffectFor(newState, xmf3Center, fRadius, fSweepAngleDeg);
+    SpawnAttackEffectFor(newState, xmf3Center, look, fRadius, fSweepAngleDeg);
 }
 
 void CBossMonster::TakeDamage(float damage)
