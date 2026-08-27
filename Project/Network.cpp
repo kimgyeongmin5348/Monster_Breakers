@@ -92,6 +92,7 @@ void ProcessEnterPacket(long long player_id, uint8_t job, short hp, const char* 
     if (!target) return;
 
     target->isConnedted = true;
+	target->SetVisible(true);
     target->networkID = player_id;
     target->currentHP = static_cast<float>((std::max)(0, static_cast<int>(hp)));
     target->maxHP = 100.0f;
@@ -509,7 +510,7 @@ void ProcessPacket(char* ptr)
     case SC_P_LEAVE: // 서버가 클라에게 다른 플레이어가 게임을 떠났음을 알려주는 패킷 타입
     {
         sc_packet_leave* packet = reinterpret_cast<sc_packet_leave*>(ptr);
-        int other_id = packet->id;
+        long long other_id = packet->id;
 
         std::cout << "[Client] Player Remove: ID=" << other_id << std::endl;
 
@@ -523,7 +524,16 @@ void ProcessPacket(char* ptr)
             {
                 OtherPlayer* target = scene->m_ppOtherPlayers[slot];
                 if (target)
+                {
                     target->isConnedted = false;
+					target->SetVisible(false);
+					target->networkID = -1;
+					target->playerID.clear();
+					target->currentHP = target->maxHP;
+					target->currentAnim = 0;
+					target->targetAnim = 0;
+					target->m_fHitFlashTimer = 0.0f;
+				}
             }
 
             // 슬롯 인덱스 반환 (job 별로 slot 범위를 역추산)

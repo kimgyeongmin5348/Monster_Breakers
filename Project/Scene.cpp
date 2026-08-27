@@ -581,6 +581,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	g_wizardIndex = 2;
 	g_thiefIndex = 4;
 	g_other_players.clear();
+	g_other_player_slots.clear();
 
 	for (int i = 0; i < 2; ++i) {
 		m_ppOtherPlayers[i] = new OtherPlayer(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, m_pKnightModel);
@@ -2042,7 +2043,8 @@ void CScene::RenderImpl(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCa
 	/*	for (int i = 0; i < m_nOtherPlayers; ++i)
 			if (m_ppOtherPlayers[i] && m_ppOtherPlayers[i]->visible) m_ppOtherPlayers[i]->Render(pd3dCommandList, pCamera);*/
 	for (auto* otherPlayer : m_vPlayers)
-		if (otherPlayer && otherPlayer->GetVisible()) otherPlayer->Render(pd3dCommandList, pCamera);
+		if (otherPlayer && otherPlayer->isConnedted && otherPlayer->GetVisible())
+			otherPlayer->Render(pd3dCommandList, pCamera);
 
 	CTerrainPlayer* pTerrainPlayer = dynamic_cast<CTerrainPlayer*>(m_pPlayer);
 	if (pTerrainPlayer)
