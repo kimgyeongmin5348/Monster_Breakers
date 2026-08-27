@@ -54,10 +54,26 @@ std::unordered_map<long long, int> g_other_player_slots;
 struct PendingEnterInfo {
     long long player_id;
     uint8_t   job;
+    short     hp;
+    std::string player_name;
 };
 std::vector<PendingEnterInfo> g_pendingEnters;
 std::mutex g_pendingEnterMutex;
-void ProcessEnterPacket(long long player_id, uint8_t job)
+
+static std::wstring PlayerIDToWide(const char* playerID)
+{
+    if (!playerID || playerID[0] == '\0') return L"";
+
+    const int count = MultiByteToWideChar(CP_ACP, 0, playerID, -1, nullptr, 0);
+    if (count <= 1) return L"";
+
+    std::wstring result(count, L'\0');
+    MultiByteToWideChar(CP_ACP, 0, playerID, -1, result.data(), count);
+    result.resize(count - 1);
+    return result;
+}
+
+void ProcessEnterPacket(long long player_id, uint8_t job, short hp, const char* player_name)
 {
     CScene* scene = gGameFramework.GetCurrentScene();
     if (!scene || !scene->m_ppOtherPlayers) return;
@@ -76,6 +92,11 @@ void ProcessEnterPacket(long long player_id, uint8_t job)
     if (!target) return;
 
     target->isConnedted = true;
+    target->networkID = player_id;
+    target->currentHP = static_cast<float>((std::max)(0, static_cast<int>(hp)));
+    target->maxHP = 100.0f;
+    target->playerID = PlayerIDToWide(player_name);
+    if (target->playerID.empty()) target->playerID = std::to_wstring(player_id);
     g_other_players[player_id] = target;
     g_other_player_slots[player_id] = slot;
 
@@ -100,6 +121,14 @@ void send_hit_damage(long long monsterID, int damage) // 이 함수를 플레이어가 공
     send_packet(&pkt);
 
     std::cout << "[HIT] monster ID=" << monsterID << " damage=" << damage << " sent\n";
+}
+
+void send_toggle_invincible_packet()
+{
+    cs_packet_toggle_invincible pkt{};
+    pkt.size = sizeof(pkt);
+    pkt.type = CS_P_TOGGLE_INVINCIBLE;
+    send_packet(&pkt);
 }
 
 
@@ -437,11 +466,11 @@ void ProcessPacket(char* ptr)
         // 로딩 중이면 버리지 말고 보관
         if (gGameFramework.isLoading || gGameFramework.isStartScene) {
             std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
-            g_pendingEnters.push_back({ player_id, packet->job });
+            g_pendingEnters.push_back({ player_id, packet->job, packet->hp, packet->playerID });
             cout << "[ENTER] loadinging: id=" << player_id << "\n";
             break;
         }
-        ProcessEnterPacket(player_id, packet->job);
+        ProcessEnterPacket(player_id, packet->job, packet->hp, packet->playerID);
 
         std::cout << "[Client] New Player " << player_id << "Connect " << "\n";
 
@@ -653,29 +682,53 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene) break;
 
-        if (scene->m_pPlayer)
-        {
-            scene->m_pGreenSpiritSystem->Emit(scene->m_pPlayer->GetPosition());
-        }
-
-        // 접속 중인 모든 OtherPlayer
-        for (auto& kv : g_other_player_slots)
-        {
-            int slot = kv.second;
-            OtherPlayer* otherPlayer = scene->m_ppOtherPlayers[slot];
-
-            if (!otherPlayer || !otherPlayer->isConnedted) continue;
-            scene->m_pGreenSpiritSystem->Emit(otherPlayer->GetPosition());
-            gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp); // HP 갱신
-        }
-
-        // 내 hp 갱신 + other player hp 갱신 필요
         if (packet->playerID == g_myid)
         {
+            if (scene->m_pPlayer && scene->m_pGreenSpiritSystem)
+                scene->m_pGreenSpiritSystem->Emit(scene->m_pPlayer->GetPosition());
             gGameFramework.UpdatePlayerHP(packet->newHp);
+        }
+        else
+        {
+            auto slotIt = g_other_player_slots.find(packet->playerID);
+            if (slotIt != g_other_player_slots.end())
+            {
+                const int slot = slotIt->second;
+                OtherPlayer* otherPlayer = scene->m_ppOtherPlayers[slot];
+                if (otherPlayer && otherPlayer->isConnedted)
+                {
+                    if (scene->m_pGreenSpiritSystem)
+                        scene->m_pGreenSpiritSystem->Emit(otherPlayer->GetPosition());
+                    gGameFramework.UpdateOtherPlayerHP(slot, packet->newHp);
+                }
+            }
         }
 
         std::cout << "[수신] SC_P_BUFF_HP | playerID=" << packet->playerID << " newHp=" << packet->newHp << "\n";
+        break;
+    }
+
+    case SC_P_PLAYER_HP:
+    {
+        sc_packet_player_hp* packet = reinterpret_cast<sc_packet_player_hp*>(ptr);
+        if (packet->playerID == g_myid)
+        {
+            gGameFramework.UpdatePlayerHP(packet->hp);
+        }
+        else
+        {
+            auto slotIt = g_other_player_slots.find(packet->playerID);
+            if (slotIt != g_other_player_slots.end())
+                gGameFramework.UpdateOtherPlayerHP(slotIt->second, packet->hp);
+        }
+        break;
+    }
+
+    case SC_P_INVINCIBLE:
+    {
+        sc_packet_invincible* packet = reinterpret_cast<sc_packet_invincible*>(ptr);
+        if (packet->playerID == g_myid)
+            std::cout << "[GOD MODE] " << (packet->enabled ? "ON" : "OFF") << "\n";
         break;
     }
 
@@ -981,7 +1034,7 @@ void LoadingDoneToServer()
         std::lock_guard<std::mutex> lock(g_pendingEnterMutex);
         for (auto& p : g_pendingEnters) {
             std::cout << "[ENTER] Queue reprocessing: id=" << p.player_id << "\n";
-            ProcessEnterPacket(p.player_id, p.job);
+            ProcessEnterPacket(p.player_id, p.job, p.hp, p.player_name.c_str());
         }
         g_pendingEnters.clear();
     }

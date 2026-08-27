@@ -363,7 +363,11 @@ void CScene::UpdatePartyHPBar(CTextureToScreenShader* pBar, CText* pLabel, float
 
 	bool bVisible = (pTarget != nullptr);
 	pBar->SetVisible(bVisible);
-	if (pLabel) pLabel->SetVisible(bVisible);
+	if (pLabel)
+	{
+		pLabel->SetVisible(bVisible);
+		if (bVisible) pLabel->UpdateText(pTarget->playerID, L"");
+	}
 	if (!bVisible) return;
 
 	float hpRatio = (pTarget->maxHP > 0.0f) ? (pTarget->currentHP / pTarget->maxHP) : 0.0f;
@@ -1835,6 +1839,10 @@ void CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			}
 			break;
 		case 'P':
+			send_toggle_invincible_packet();
+			break;
+
+		case VK_F10:
 			m_bDebugMode = !m_bDebugMode;
 			break;
 

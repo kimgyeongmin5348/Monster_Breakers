@@ -78,6 +78,11 @@ constexpr char SC_P_NPC_MISSION = 76;
 constexpr char SC_P_MISSION_COMPLETE = 77;
 constexpr char SC_P_MISSION_PROGRESS = 78;
 
+// 개발자 테스트 / 플레이어 상태 동기화
+constexpr char SC_P_PLAYER_HP = 79;
+constexpr char CS_P_TOGGLE_INVINCIBLE = 80;
+constexpr char SC_P_INVINCIBLE = 81;
+
 
 // =================== 주의!! ========================
 // 
@@ -207,6 +212,26 @@ struct sc_packet_respawn {
 	long long			playerID;
 	XMFLOAT3			position;
 	short				hp;
+};
+
+struct sc_packet_player_hp {
+	unsigned char size;
+	char          type;
+	long long     playerID;
+	short         hp;
+	short         maxHp;
+};
+
+struct cs_packet_toggle_invincible {
+	unsigned char size;
+	char          type;
+};
+
+struct sc_packet_invincible {
+	unsigned char size;
+	char          type;
+	long long     playerID;
+	bool          enabled;
 };
 
 struct cs_packet_use_gold {

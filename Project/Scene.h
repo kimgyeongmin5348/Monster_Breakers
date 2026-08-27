@@ -137,7 +137,7 @@ public:
 	void CreatePartyHPUI(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void UpdatePartyHPUI();
 
-	// Judging/debug overlay (top-left text, shown while m_bDebugMode is on - 'P' toggles it)
+	// Judging/debug overlay (top-left text, shown while m_bDebugMode is on - F10 toggles it)
 	void CreateDebugOverlay(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void UpdateDebugOverlay();
 
@@ -381,7 +381,7 @@ public:
 		if (clientnum < 0 || clientnum >= m_nOtherPlayers) return;
 		if (!m_ppOtherPlayers[clientnum]) return; 
 		m_ppOtherPlayers[clientnum]->currentHP = hp;
-		m_ppOtherPlayers[clientnum]->maxHP += hp;
+		m_ppOtherPlayers[clientnum]->maxHP = 100.0f;
 	}
 };
 
