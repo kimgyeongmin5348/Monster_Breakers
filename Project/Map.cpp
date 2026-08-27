@@ -8,7 +8,7 @@ Map::Map(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, I
 	m_pInstancedShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
 
 	LoadMapObjectsFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-	LoadGeometryFromFile();
+	LoadGeometryFromFile("Model/Map/Setter/Map_objects_instances_setter.bin");
 	SetInstanceData();
 	BuildInstanceBuffers(pd3dDevice, pd3dCommandList);
 	BuildWorldBoundingBoxes();
@@ -70,12 +70,12 @@ void Map::LoadMapObjectsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommand
 }
 
 // setter.bin 을 읽어와 m_vObjectInstances에 인스턴싱 데이터 저장
-void Map::LoadGeometryFromFile()
+void Map::LoadGeometryFromFile(const std::string& filePath)
 {
-	std::ifstream inFile("Model/Map/Setter/Map_objects_instances_setter.bin", std::ios::binary);
+	std::ifstream inFile(filePath, std::ios::binary);
 	if (!inFile)
 	{
-		std::cerr << "Error: Could not open Map_objects_instances_setter.bin" << std::endl;
+		std::cerr << "Error: Could not open " << filePath << std::endl;
 		return;
 	}
 
@@ -399,4 +399,28 @@ void Map::BuildWorldBoundingBoxes()
 			group.vWorldColliders.push_back(collider);
 		}
 	}
+}
+
+void Map::ReleaseInstanceBuffers()
+{
+	for (auto& pair : m_mInstanceGroups)
+	{
+		if (pair.second.pInstanceBuffer)
+		{
+			pair.second.pInstanceBuffer->Release();
+			pair.second.pInstanceBuffer = nullptr;
+		}
+	}
+	m_mInstanceGroups.clear();
+	ReleaseUploadBuffers();
+}
+
+void Map::ReloadInstances(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const std::string& setterFilePath)
+{
+	ReleaseInstanceBuffers();
+
+	LoadGeometryFromFile(setterFilePath);
+	SetInstanceData();
+	BuildInstanceBuffers(pd3dDevice, pd3dCommandList);
+	BuildWorldBoundingBoxes();
 }

@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "Mesh.h"
 #include "Object.h"
+#include "Common.h"
 
 CMesh::CMesh(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
@@ -73,10 +74,12 @@ void CMesh::Render(ID3D12GraphicsCommandList *pd3dCommandList, int nSubSet)
 	{
 		pd3dCommandList->IASetIndexBuffer(&(m_pd3dSubSetIndexBufferViews[nSubSet]));
 		pd3dCommandList->DrawIndexedInstanced(m_pnSubSetIndices[nSubSet], 1, 0, 0, 0);
+		++g_nDrawCallCount;
 	}
 	else
 	{
 		pd3dCommandList->DrawInstanced(m_nVertices, 1, m_nOffset, 0);
+		++g_nDrawCallCount;
 	}
 }
 
@@ -98,10 +101,12 @@ void CMesh::RenderInstanced(ID3D12GraphicsCommandList* pd3dCommandList, int nSub
 	{
 		pd3dCommandList->IASetIndexBuffer(&(m_pd3dSubSetIndexBufferViews[nSubSet]));
 		pd3dCommandList->DrawIndexedInstanced(m_pnSubSetIndices[nSubSet], nInstances, 0, 0, 0);
+		++g_nDrawCallCount;
 	}
 	else
 	{
 		pd3dCommandList->DrawInstanced(m_nVertices, nInstances, m_nOffset, 0);
+		++g_nDrawCallCount;
 	}
 }
 

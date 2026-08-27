@@ -845,12 +845,15 @@ void ProcessPacket(char* ptr)
         CScene* scene = gGameFramework.GetCurrentScene();
         if (!scene || !scene->m_pBoss) break;
 
+        CCamera* camera = gGameFramework.GetCamera();
+
+
         // 애니메이션 전환 + 공격범위 이펙트(모양/색상/웜업 결정)는 모두 CBossMonster가 처리한다.
         // (보스가 어떤 트랙으로 들어가는지에 따라 스스로 이펙트를 스폰함 - PlayAttackPattern 참고)
         switch (packet->patternType) {
-        case 0: scene->m_pBoss->PlayAttackPattern(BossState::Attack01, packet->attackCenter, packet->look, packet->attackRange); break; // NORMAL
-        case 1: scene->m_pBoss->PlayAttackPattern(BossState::Attack02, packet->attackCenter, packet->look, packet->attackRange); break; // SLAM
-        case 2: scene->m_pBoss->PlayAttackPattern(BossState::Taunt, packet->attackCenter, packet->look, packet->attackRange, packet->sweepAngle); break; // SWEEP
+        case 0: scene->m_pBoss->PlayAttackPattern(BossState::Attack01, packet->attackCenter, packet->look, packet->attackRange); camera->StartShake(0.5f, 1.0f, 50.0f);  break; // NORMAL
+        case 1: scene->m_pBoss->PlayAttackPattern(BossState::Attack02, packet->attackCenter, packet->look, packet->attackRange); camera->StartShake(0.5f, 1.0f, 25.0f); break; // SLAM
+        case 2: scene->m_pBoss->PlayAttackPattern(BossState::Taunt, packet->attackCenter, packet->look, packet->attackRange, packet->sweepAngle); camera->StartShake(1.5f, 1.0f, 50.0f); break; // SWEEP
         }
 
 

@@ -120,6 +120,18 @@ struct AnimationBlend
 	bool active = false;
 };
 
+// Global toggle for animation blending (Caps Lock in-game). When false,
+// StartAnimationBlend() snaps directly to the target track instead of crossfading -
+// lets a demo show the before/after difference on demand.
+inline bool g_bAnimationBlendEnabled = true;
+
+// Global per-frame draw call counter. CMesh::Render()/RenderInstanced() (the sole
+// geometry draw path for terrain/skybox/map/monsters/players/UI) and each particle
+// or procedural-mesh effect's own DrawInstanced/DrawIndexedInstanced call increment
+// this. CScene::RenderImpl() resets it to 0 right before drawing the new frame; the
+// debug overlay reads it one frame late (negligible for a stats display).
+inline int g_nDrawCallCount = 0;
+
 struct sc_packet_user_info {
 	unsigned char	size;
 	char			type;

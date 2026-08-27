@@ -1,22 +1,25 @@
-﻿#pragma once
+#pragma once
 #include "stdafx.h"
 #include "Shader.h"
 #include "Mesh.h"
-#include "CFireballSystem.h"   // FireballParticleData 구조체 재사용
+#include "CFireballSystem.h"   // reuse FireballParticleData
 
-class CGreenSpiritSystem
+// Bigger, longer-lived explosion burst played on monster/boss death.
+// Reuses CFireballShader as-is (fire colors read fine as an explosion),
+// so unlike CHitSparkSystem this needs no new pixel shader.
+class CDeathBurstSystem
 {
 public:
-    static const int MAX_PARTICLES = 256;
+    static const int MAX_PARTICLES = 384;
 
-    CGreenSpiritSystem(
+    CDeathBurstSystem(
         ID3D12Device* pd3dDevice,
         ID3D12GraphicsCommandList* pd3dCommandList,
         ID3D12RootSignature* pd3dRootSignature);
 
-    ~CGreenSpiritSystem();
+    ~CDeathBurstSystem();
 
-    // position: 플레이어 발 위치 (바닥)
+    // Spawns a full-sphere explosion burst centered on position.
     void Emit(XMFLOAT3 position);
     void Animate(float fTimeElapsed);
     void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
@@ -30,9 +33,9 @@ private:
     void UploadToGPU(ID3D12GraphicsCommandList* pd3dCommandList);
 
 private:
-    FireballParticleData  m_Particles[MAX_PARTICLES] = {};
-    int   m_nNextSlot = 0;
-    bool  m_bNeedUpload = false;
+    FireballParticleData m_Particles[MAX_PARTICLES] = {};
+    int  m_nNextSlot = 0;
+    bool m_bNeedUpload = false;
 
     ID3D12Resource* m_pParticleUploadBuffer = nullptr;
     FireballParticleData* m_pMappedData = nullptr;

@@ -53,6 +53,20 @@ void CCollisionManager::PrintTree()
     m_pQuadTree->PrintTree();
 }
 
+static int CountQuadTreeNodesRecursive(QuadTreeNode* node)
+{
+    if (!node) return 0;
+    int count = 1;
+    for (int i = 0; i < 4; ++i)
+        count += CountQuadTreeNodesRecursive(node->children[i]);
+    return count;
+}
+
+int CCollisionManager::CountQuadTreeNodes() const
+{
+    return CountQuadTreeNodesRecursive(m_pQuadTree ? m_pQuadTree->root : nullptr);
+}
+
 bool CCollisionManager::CheckIntersection(const BoundingBox& bounds, const ColliderInfo& col)
 {
     switch (col.type)
@@ -112,6 +126,7 @@ void CCollisionManager::Update(CPlayer* player)
                         XMFLOAT3 xmf3HitPos = monster->GetPosition();
                         xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                         m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                        if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, CHitSparkSystem::TINT_WIZARD);
                     }
                     m_pFireballSystem->DeactivateAt(idx);  // 파이어볼 소멸
                     break;
@@ -138,6 +153,7 @@ void CCollisionManager::Update(CPlayer* player)
                         XMFLOAT3 xmf3HitPos = m_pBoss->GetPosition();
                         xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                         m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                        if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, CHitSparkSystem::TINT_WIZARD);
                     }
                     m_pFireballSystem->DeactivateAt(idx);  // 파이어볼 소멸
                     break;
@@ -167,6 +183,7 @@ void CCollisionManager::Update(CPlayer* player)
                     XMFLOAT3 xmf3HitPos = monster->GetPosition();
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                    if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, CHitSparkSystem::TINT_THIEF);
                 }
                 m_pWeaponThrowSystem->Deactivate();  // 무기 소멸 + 손 무기 복원
                 break;
@@ -187,6 +204,7 @@ void CCollisionManager::Update(CPlayer* player)
                     XMFLOAT3 xmf3HitPos = m_pBoss->GetPosition();
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, dmg);
+                    if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, CHitSparkSystem::TINT_THIEF);
                 }
                 m_pWeaponThrowSystem->Deactivate();  // 무기 소멸 + 손 무기 복원
             }
@@ -200,6 +218,10 @@ void CCollisionManager::Update(CPlayer* player)
 
     int weaponDmg = 0;
     bool isWeaponSwing = false;
+    float hitSparkTint = isKnight ? (float)CHitSparkSystem::TINT_KNIGHT
+        : isRogue ? (float)CHitSparkSystem::TINT_THIEF
+        : isMage ? (float)CHitSparkSystem::TINT_WIZARD
+        : (float)CHitSparkSystem::TINT_DEFAULT;
 
     if (isAttacking)
     {
@@ -229,6 +251,7 @@ void CCollisionManager::Update(CPlayer* player)
                     xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                     bool bCritical = !isAttacking; // 기본 공격이 아닌 Q 스킬 타격은 크리티컬 색상으로 강조
                     m_pDamageNumberSystem->Spawn(xmf3HitPos, weaponDmg, bCritical);
+                    if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, hitSparkTint);
                 }
                 m_bHitProcessed = true;
             }
@@ -250,6 +273,7 @@ void CCollisionManager::Update(CPlayer* player)
                 xmf3HitPos.y += DAMAGE_NUMBER_Y_OFFSET;
                 bool bCritical = !isAttacking;
                 m_pDamageNumberSystem->Spawn(xmf3HitPos, weaponDmg, bCritical);
+                if (m_pHitSparkSystem) m_pHitSparkSystem->Emit(xmf3HitPos, 10, hitSparkTint);
             }
             m_bBossHitProcessed = true;
         }

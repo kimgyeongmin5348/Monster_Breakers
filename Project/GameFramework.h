@@ -85,6 +85,7 @@ public:
 	void UpdatePlayerHP(float hp) {
 		if (m_pPlayer->currentHP > hp) {
 			CSoundManager::GetInstance()->PlaySFX("player_hurt");
+			m_pCamera->StartShake(0.5f, 1.0f, 25.0f);
 		}
 		m_pPlayer->currentHP = hp;
 		m_pPlayer->maxHP += hp;
@@ -147,6 +148,8 @@ public:
 		if (m_nCurrentScene < 0 || m_nCurrentScene >= m_nScenes) return nullptr;
 		return m_ppScenes[m_nCurrentScene];
 	}
+
+	CCamera* GetCamera() { return m_pCamera; }
 
 	bool isLoading = false;
 	bool isStartScene = true;
@@ -216,6 +219,9 @@ private:
 	// 평소엔 커서가 자유로워 기존 좌/우클릭(공격, 스킬강화 등)이 그대로 동작한다.
 	bool m_bMouseOrbitDragging = false;
 	POINT m_ptOrbitLastPos;
+
+	bool m_bReloadInstancesRequested = false;
+	bool m_bUsingTestSetter = false;
 
 	_TCHAR						m_pszFrameRate[70];
 

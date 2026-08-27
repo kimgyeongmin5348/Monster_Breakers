@@ -26,3 +26,13 @@ public:
     virtual D3D12_SHADER_BYTECODE CreateVertexShader() override;
     virtual D3D12_SHADER_BYTECODE CreatePixelShader()  override;
 };
+
+class CHitSparkShader : public CFireballShader
+{
+public:
+    CHitSparkShader() = default;
+    ~CHitSparkShader() = default;
+
+    virtual D3D12_SHADER_BYTECODE CreateVertexShader() override;
+    virtual D3D12_SHADER_BYTECODE CreatePixelShader()  override;
+};
