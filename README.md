@@ -2,6 +2,38 @@
 
 > DirectX 12 기반 3D 멀티플레이 액션 RPG 클라이언트입니다. 기사, 마법사, 도적 중 하나를 선택해 필드를 탐험하고, 몬스터와 보스를 상대하며 다른 플레이어와 게임 상태를 실시간으로 동기화합니다.
 
+## 기술 스택
+
+#### Language
+
+![C++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=cplusplus&logoColor=white)
+![HLSL](https://img.shields.io/badge/HLSL-5C2D91?style=flat-square&logo=windows&logoColor=white)
+
+#### Graphics & Game
+
+![DirectX 12](https://img.shields.io/badge/DirectX_12-107C10?style=flat-square&logo=windows&logoColor=white)
+![DirectXMath](https://img.shields.io/badge/DirectXMath-0078D4?style=flat-square&logo=microsoft&logoColor=white)
+![Win32 API](https://img.shields.io/badge/Win32_API-0078D6?style=flat-square&logo=windows&logoColor=white)
+
+#### Network
+
+![WinSock2](https://img.shields.io/badge/WinSock2-0078D4?style=flat-square&logo=windows&logoColor=white)
+![TCP](https://img.shields.io/badge/TCP-Binary_Protocol-263238?style=flat-square&logo=socketdotio&logoColor=white)
+![IOCP](https://img.shields.io/badge/IOCP-Server-0A66C2?style=flat-square&logo=windows&logoColor=white)
+
+#### Audio
+
+![FMOD](https://img.shields.io/badge/FMOD-Core_API-EF2D5E?style=flat-square&logo=audiomack&logoColor=white)
+
+#### Tools
+
+![Visual Studio](https://img.shields.io/badge/Visual_Studio-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)
+![MSVC v145](https://img.shields.io/badge/MSVC-v145-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)
+![Blender](https://img.shields.io/badge/Blender-F5792A?style=flat-square&logo=blender&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)
+![Windows SDK](https://img.shields.io/badge/Windows_SDK_10-0078D6?style=flat-square&logo=windows&logoColor=white)
+
 ## 팀원
 
 | 이름 | GitHub | 맡은 분야 |
@@ -162,14 +194,6 @@ flowchart LR
 - 충돌 처리, 3인칭 카메라, 그림자 및 파티클 이펙트
 - NPC 상호작용, 미션, 골드 보상과 스킬 강화
 - FMOD 기반 배경음악과 효과음
-
-## 기술 스택
-
-- C++ / Win32 API
-- DirectX 12 / HLSL / DirectXMath
-- WinSock2 / TCP
-- FMOD Core API
-- Visual Studio / MSVC v145 / Windows SDK 10
 
 ## 빠른 실행
 
