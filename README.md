@@ -4,35 +4,13 @@
 
 ## 기술 스택
 
-#### Language
-
-![C++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=cplusplus&logoColor=white)
-![HLSL](https://img.shields.io/badge/HLSL-5C2D91?style=flat-square&logo=windows&logoColor=white)
-
-#### Graphics & Game
-
-![DirectX 12](https://img.shields.io/badge/DirectX_12-107C10?style=flat-square&logo=windows&logoColor=white)
-![DirectXMath](https://img.shields.io/badge/DirectXMath-0078D4?style=flat-square&logo=microsoft&logoColor=white)
-![Win32 API](https://img.shields.io/badge/Win32_API-0078D6?style=flat-square&logo=windows&logoColor=white)
-
-#### Network
-
-![WinSock2](https://img.shields.io/badge/WinSock2-0078D4?style=flat-square&logo=windows&logoColor=white)
-![TCP](https://img.shields.io/badge/TCP-Binary_Protocol-263238?style=flat-square&logo=socketdotio&logoColor=white)
-![IOCP](https://img.shields.io/badge/IOCP-Server-0A66C2?style=flat-square&logo=windows&logoColor=white)
-
-#### Audio
-
-![FMOD](https://img.shields.io/badge/FMOD-Core_API-EF2D5E?style=flat-square&logo=audiomack&logoColor=white)
-
-#### Tools
-
-![Visual Studio](https://img.shields.io/badge/Visual_Studio-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)
-![MSVC v145](https://img.shields.io/badge/MSVC-v145-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)
-![Blender](https://img.shields.io/badge/Blender-F5792A?style=flat-square&logo=blender&logoColor=white)
-![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)
-![Windows SDK](https://img.shields.io/badge/Windows_SDK_10-0078D6?style=flat-square&logo=windows&logoColor=white)
+| 구분 | 사용 기술 및 도구 |
+|---|---|
+| Language | ![C++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=cplusplus&logoColor=white) ![HLSL](https://img.shields.io/badge/HLSL-5C2D91?style=flat-square&logo=microsoft&logoColor=white) |
+| Graphics & Game | ![DirectX 12](https://img.shields.io/badge/DirectX_12-107C10?style=flat-square&logo=microsoft&logoColor=white) ![DirectXMath](https://img.shields.io/badge/DirectXMath-0078D4?style=flat-square&logo=microsoft&logoColor=white) ![Win32 API](https://img.shields.io/badge/Win32_API-0078D6?style=flat-square&logo=windows11&logoColor=white) |
+| Network | ![WinSock2](https://img.shields.io/badge/WinSock2-0078D4?style=flat-square&logo=windows11&logoColor=white) ![TCP](https://img.shields.io/badge/TCP-Binary_Protocol-263238?style=flat-square&logo=socketdotio&logoColor=white) ![IOCP](https://img.shields.io/badge/IOCP-Server-0A66C2?style=flat-square&logo=microsoft&logoColor=white) |
+| Audio | ![FMOD](https://img.shields.io/badge/FMOD-Core_API-000000?style=flat-square&logo=fmod&logoColor=white) |
+| Tools | ![Visual Studio](https://img.shields.io/badge/Visual_Studio-5C2D91?style=flat-square&logo=visualstudio&logoColor=white) ![MSVC v145](https://img.shields.io/badge/MSVC-v145-5C2D91?style=flat-square&logo=visualstudio&logoColor=white) ![Blender](https://img.shields.io/badge/Blender-F5792A?style=flat-square&logo=blender&logoColor=white) ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white) ![Windows SDK](https://img.shields.io/badge/Windows_SDK_10-0078D6?style=flat-square&logo=windows11&logoColor=white) |
 
 ## 팀원
 
